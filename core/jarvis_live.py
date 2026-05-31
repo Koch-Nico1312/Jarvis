@@ -38,6 +38,7 @@ from core.proactive_suggestions import get_proactive_suggestions
 from core.semantic_search import get_semantic_search
 from core.voice_emotion import get_emotion_analyzer
 from core.vscode_bridge import get_vscode_bridge
+from core.session_manager import get_session_manager
 from memory.memory_manager import (
     MEMORY_PATH, load_memory, update_memory, format_memory_for_prompt,
 )
@@ -169,6 +170,7 @@ class JarvisLive:
         self.vscode = get_vscode_bridge()
         self.cross_device = get_cross_device()
         self.obsidian_bridge = get_obsidian_bridge()
+        self.session_context = get_session_manager()
         self.conversation_started = False
 
         # Performance monitoring
@@ -340,6 +342,12 @@ class JarvisLive:
         if self.proactive.enabled:
             self.proactive.set_speak_callback(self.speak)
             self.proactive.start()
+
+        if self.config.get("briefing.enabled", False):
+            from core.daily_briefing import get_daily_briefing
+            briefing = get_daily_briefing()
+            briefing.set_speak_callback(self.speak)
+            briefing.start_scheduler()
 
         if self.config.get("rag.enabled", False) and self.semantic_search.enabled:
             auto_paths = self.config.get("rag.auto_index_paths", ["./docs"])
@@ -571,6 +579,7 @@ class JarvisLive:
             )
             self._context_signature = self._get_context_signature()
         self._note_user_input(text)
+        self.session_context.record_user_message(text)
         asyncio.run_coroutine_threadsafe(
             self.session.send_client_content(
                 turns={"parts": [{"text": text}]},
@@ -700,6 +709,12 @@ class JarvisLive:
         parts = [time_ctx]
         if mem_str:
             parts.append(mem_str)
+        
+        # Add session context summary if available
+        context_summary = self.session_context.build_context_summary()
+        if context_summary:
+            parts.append(context_summary)
+        
         parts.append(sys_prompt)
 
         return types.LiveConnectConfig(
@@ -867,6 +882,18 @@ class JarvisLive:
                 r = await loop.run_in_executor(None, lambda: gmail_manager(parameters=args, response=None, player=self.ui, speak=self.speak, session_memory=None))
                 result = r or "Done."
 
+            elif name == "calendar_manager":
+                r = await loop.run_in_executor(None, lambda: calendar_manager(parameters=args, response=None, player=self.ui, speak=self.speak, session_memory=None))
+                result = r or "Done."
+
+            elif name == "daily_briefing":
+                r = await loop.run_in_executor(None, lambda: daily_briefing(parameters=args, response=None, player=self.ui, speak=self.speak, session_memory=None))
+                result = r or "Done."
+
+            elif name == "spotify_controller":
+                r = await loop.run_in_executor(None, lambda: spotify_controller(parameters=args, response=None, player=self.ui, speak=self.speak, session_memory=None))
+                result = r or "Done."
+
             elif name == "obsidian_manager":
                 result = self._handle_obsidian_manager(args)
 
@@ -925,6 +952,9 @@ class JarvisLive:
             )
 
             self.proactive.track_action(name, success=True)
+            
+            # Record tool execution for session context
+            self.session_context.record_tool_execution(name, args, str(result)[:300])
 
         except Exception as e:
             duration_ms = (datetime.now() - start_time).total_seconds() * 1000
@@ -1130,12 +1160,14 @@ class JarvisLive:
                             if full_in:
                                 self._note_user_input(full_in)
                                 self.ui.write_log(f"You: {full_in}")
+                                self.session_context.record_user_message(full_in)
                             in_buf = []
 
                             full_out = " ".join(out_buf).strip()
                             if full_out:
                                 self.ui.write_log(f"Jarvis: {full_out}")
                                 self.track_obsidian_response(full_out)
+                                self.session_context.record_jarvis_response(full_out)
                             out_buf = []
 
                     if response.tool_call:
@@ -1275,6 +1307,7 @@ class JarvisLive:
             except Exception as e:
                 logger.error(f"Connection error: {e}")
                 traceback.print_exc()
+                self.session_context.mark_reconnect()
                 if _is_invalid_api_key_error(e):
                     self.set_speaking(False)
                     self.ui.set_state("API KEY ERROR")

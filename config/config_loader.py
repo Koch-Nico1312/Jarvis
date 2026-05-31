@@ -154,6 +154,16 @@ class Config:
         if os.getenv('VSCODE_PORT'):
             env_dict.setdefault('vscode', {})['port'] = int(os.getenv('VSCODE_PORT'))
         
+        # Spotify
+        if os.getenv('SPOTIFY_CLIENT_ID'):
+            env_dict.setdefault('spotify', {})['client_id'] = os.getenv('SPOTIFY_CLIENT_ID')
+        if os.getenv('SPOTIFY_CLIENT_SECRET'):
+            env_dict.setdefault('spotify', {})['client_secret'] = os.getenv('SPOTIFY_CLIENT_SECRET')
+        if os.getenv('SPOTIFY_REDIRECT_URI'):
+            env_dict.setdefault('spotify', {})['redirect_uri'] = os.getenv('SPOTIFY_REDIRECT_URI')
+        if os.getenv('SPOTIFY_ENABLED'):
+            env_dict.setdefault('spotify', {})['enabled'] = os.getenv('SPOTIFY_ENABLED').lower() == 'true'
+        
         # System
         if os.getenv('STEALTH_MODE'):
             env_dict.setdefault('system', {})['stealth_mode'] = os.getenv('STEALTH_MODE').lower() == 'true'
