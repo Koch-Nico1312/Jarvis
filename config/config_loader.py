@@ -5,10 +5,11 @@ Loads configuration from .env and config.yaml
 
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 import yaml
+
+from core.paths import resolve_project_root
 
 try:
     from dotenv import load_dotenv
@@ -34,11 +35,9 @@ class Config:
     
     def _load_config(self):
         """Load configuration from all sources"""
-        # Get base directory
-        if getattr(sys, "frozen", False):
-            self.base_dir = Path(sys.executable).parent
-        else:
-            self.base_dir = Path(__file__).resolve().parent.parent
+        # Resolve the project root once so config and asset paths stay stable
+        # even when the app is launched from a shortcut or packaged executable.
+        self.base_dir = resolve_project_root()
         
         # Load .env file
         if DOTENV_AVAILABLE:

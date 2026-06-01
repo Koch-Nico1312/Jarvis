@@ -23,6 +23,7 @@ except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 from config.config_loader import get_config
+from core.paths import resolve_relative_path
 
 
 class SemanticSearch:
@@ -32,7 +33,9 @@ class SemanticSearch:
         self.config = get_config()
         self.enabled = self.config.get('rag.enabled', False)
         self.vector_db = self.config.get('rag.vector_db', 'chromadb')
-        self.index_path = Path(self.config.get('rag.index_path', './data/vector_db'))
+        self.index_path = resolve_relative_path(
+            self.config.get('rag.index_path', str(resolve_relative_path('data/vector_db')))
+        )
         self.chunk_size = self.config.get('rag.chunk_size', 500)
         self.chunk_overlap = self.config.get('rag.chunk_overlap', 50)
         self.embedding_model = self.config.get('rag.embedding_model', 'all-MiniLM-L6-v2')

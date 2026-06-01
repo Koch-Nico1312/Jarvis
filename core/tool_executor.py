@@ -10,8 +10,8 @@ This module provides:
 
 import asyncio
 import traceback
+import time
 from typing import Any, Optional, Callable, Dict
-from datetime import datetime
 
 from core.logger import get_logger
 from core.performance_monitor import get_performance_monitor
@@ -73,10 +73,11 @@ class ToolExecutor:
         """
         logger.info(f"Executing tool: {name} with args {args}")
         
-        start_time = datetime.now()
+        start_perf = time.perf_counter()
         success = True
         error = None
         result = "Done."
+        action = str(args.get("action", name) or name)
         
         try:
             if name in self.tool_registry:
@@ -99,7 +100,19 @@ class ToolExecutor:
             traceback.print_exc()
         
         # Track performance
-        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        duration_ms = (time.perf_counter() - start_perf) * 1000
+        try:
+            self.perf_monitor.track_tool_execution(
+                tool_name=name,
+                action=action,
+                duration_ms=duration_ms,
+                success=success,
+                error=error,
+                parameters=args,
+                result_size=len(str(result).encode("utf-8")),
+            )
+        except Exception as perf_error:
+            logger.debug(f"Tool execution metrics skipped: {perf_error}")
         self.perf_monitor.track_api_call(
             endpoint=f"tool_{name}",
             duration_ms=duration_ms,

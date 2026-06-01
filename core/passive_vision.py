@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from core.paths import resolve_relative_path
+
 try:
     import mss
     import cv2
@@ -94,8 +96,11 @@ class PassiveVision:
         self.interval = self.config.get('passive_vision.interval_seconds', 30)
         self.memory_minutes = self.config.get('passive_vision.memory_minutes', 10)
         
-        storage_path = self.config.get('passive_vision.storage_path', './data/vision_memory')
-        self.storage_path = Path(storage_path)
+        storage_path = self.config.get(
+            'passive_vision.storage_path',
+            str(resolve_relative_path('data/vision_memory')),
+        )
+        self.storage_path = resolve_relative_path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
         
         self.memory = VisionMemory(max_minutes=self.memory_minutes)

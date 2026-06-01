@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
 
+from core.paths import project_path
+
 try:
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -38,11 +40,11 @@ class CalendarManager:
         base_dir = Path(self.config.get('paths.base_dir', '.'))
         credentials_path = self.config.get(
             "calendar.credentials_path",
-            "./config/gmail_credentials.json",
+            str(project_path("config", "gmail_credentials.json")),
         )
         token_path = self.config.get(
             "calendar.token_path",
-            "./config/calendar_token.json",
+            str(project_path("config", "calendar_token.json")),
         )
         self.credentials_path = Path(credentials_path)
         if not self.credentials_path.is_absolute():

@@ -17,6 +17,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 
 from core.logger import get_logger
+from core.paths import project_path
 from core.performance_monitor import get_performance_monitor
 from memory.memory_backup import get_backup_manager
 from core.cache_manager import get_cache_manager
@@ -345,7 +346,7 @@ class HealthMonitor:
             path: Path to save report (defaults to ./logs/health_report.json)
         """
         if path is None:
-            path = Path("./logs/health_report.json")
+            path = project_path("logs", "health_report.json")
         
         path.parent.mkdir(parents=True, exist_ok=True)
         

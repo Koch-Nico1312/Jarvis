@@ -11,6 +11,7 @@ from typing import Any
 
 # Initialize logging first
 from core.logger import setup_logging, get_logger
+from core.paths import project_path, resolve_project_root, resolve_relative_path
 
 os.environ["PYTHONUTF8"] = "1"
 for _stream_name in ("stdout", "stderr"):
@@ -95,15 +96,9 @@ from actions.spotify_controller import spotify_controller
 from core.daily_briefing       import daily_briefing
 
 
-def get_base_dir():
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).resolve().parent
-
-
-BASE_DIR        = get_base_dir()
-API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
-PROMPT_PATH     = BASE_DIR / "core" / "prompt.txt"
+BASE_DIR        = resolve_project_root()
+API_CONFIG_PATH = project_path("config", "api_keys.json")
+PROMPT_PATH     = project_path("core", "prompt.txt")
 DEFAULT_LIVE_MODEL = "models/gemini-2.5-flash-native-audio-preview-12-2025"
 DEFAULT_CHANNELS = 1
 DEFAULT_SEND_SAMPLE_RATE = 16000
@@ -933,8 +928,11 @@ def main():
             
             # Configure persistence
             if config.get("workflow.persistence_enabled", True):
-                persistence_dir = config.get("workflow.persistence_dir", "./data/workflows")
-                workflow_engine.persistence_dir = Path(persistence_dir)
+                persistence_dir = config.get(
+                    "workflow.persistence_dir",
+                    str(project_path("data", "workflows")),
+                )
+                workflow_engine.persistence_dir = resolve_relative_path(persistence_dir)
                 workflow_engine.persistence_dir.mkdir(parents=True, exist_ok=True)
                 workflow_engine.persistence_file = workflow_engine.persistence_dir / "workflows.json"
             

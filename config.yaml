@@ -130,6 +130,92 @@ security:
   permission_profile: "normal"        # safe | normal | admin
   allow_destructive_actions: true   # global override for destructive file/command operations
   mcp_enabled: true                  # enables loading MCP servers on boot
+  confirmation_medium_risk: true     # require confirmation for medium-risk actions
+  confirmation_high_risk: true      # require confirmation for high-risk actions
+  disabled_actions: []               # list of actions to disable (e.g., ["delete", "shutdown"])
+  action_history_enabled: true      # enable persistent action history
+  action_history_max_size: 1000     # maximum number of history entries to keep
+
+# Performance & Monitoring Settings
+performance:
+  enabled: true                      # enable performance monitoring
+  track_tool_executions: true        # track tool execution times
+  track_latency: true                # track detailed latency breakdown
+  slow_operation_threshold_ms: 2000  # threshold for slow operation detection
+  alert_threshold_ms: 5000           # threshold for performance alerts
+  max_history_size: 1000             # maximum performance history entries
+  resource_monitoring: true          # enable resource monitoring (CPU, RAM, etc.)
+  resource_interval_seconds: 60       # interval between resource snapshots
+  cache_enabled: true                # enable caching system
+  cache_ttl_hours: 24                # default cache time-to-live in hours
+  background_tasks_enabled: true      # enable background task processing
+  background_workers: 4              # number of background worker threads
+  status_update_interval_ms: 500     # interval for status updates (ms)
+
+# Workflow & Orchestration Settings
+workflow:
+  enabled: true                      # enable workflow engine
+  max_concurrent_workflows: 2        # maximum workflows running concurrently
+  persistence_enabled: true          # enable workflow persistence
+  persistence_dir: "./data/workflows"  # directory for workflow storage
+  auto_cleanup_hours: 168            # auto-cleanup old workflows after hours (7 days)
+  default_priority: "normal"         # default workflow priority (low, normal, high, urgent)
+  default_max_retries: 3             # default max retries for failed workflows
+  step_timeout_seconds: 300           # timeout for individual steps (5 minutes)
+  require_confirmation_high_risk: true  # require confirmation for high-risk steps
+
+# Local Analysis & Multimodal Settings
+local_analysis:
+  enabled: true                      # enable local file and image analysis
+  cache_results: true                 # cache analysis results
+  max_cache_size: 1000               # maximum cache entries
+  supported_image_formats: ["png", "jpg", "jpeg", "webp", "bmp", "gif"]
+  supported_document_formats: ["pdf", "txt", "md", "docx", "doc", "rtf"]
+  analysis_timeout_seconds: 30        # timeout for analysis operations
+
+# Skin Analysis Settings
+skin_analysis:
+  enabled: true                      # enable skin analysis feature
+  conservative_mode: true            # use conservative, non-diagnostic language
+  require_disclaimer: true           # always include medical disclaimer
+  care_suggestions_enabled: true      # provide general care suggestions
+  dermatologist_referral_threshold: "high"  # when to suggest dermatologist (low, medium, high)
+
+# Morning Routine Settings
+morning_routine:
+  enabled: false                     # enable morning routine (disabled by default)
+  mode: "manual"                     # off, manual, semi_automatic, full_automatic
+  reminder_time: "08:00"             # daily reminder time (HH:MM)
+  reminder_window_minutes: 60        # window for reminder
+  photo_directory: ""                # directory to watch for photos (empty = manual upload)
+  auto_analyze: true                 # automatically analyze submitted photos
+  send_reminder_if_missed: true      # send follow-up reminder if photo missed
+  reminder_delay_minutes: 120        # delay for follow-up reminder (2 hours)
+  quiet_hours_start: "22:00"         # start of quiet hours
+  quiet_hours_end: "07:00"           # end of quiet hours
+
+# Memory & Retrieval Settings
+memory_retrieval:
+  enabled: true                      # enable hybrid retrieval
+  semantic_weight: 0.4               # weight for semantic similarity
+  keyword_weight: 0.3                # weight for keyword matching
+  time_weight: 0.2                  # weight for recency
+  confidence_weight: 0.1             # weight for confidence score
+  max_results: 10                   # maximum retrieval results
+  min_relevance_threshold: 0.3       # minimum relevance threshold
+  conflict_detection: true           # detect conflicting memories
+  auto_update_access_count: true     # update access count on retrieval
+
+# Proactive Suggestions Settings
+proactive:
+  enabled: false                     # enable proactive suggestions (disabled by default)
+  mode: "normal"                     # off, subtle, normal, active
+  interval_seconds: 60              # interval between suggestion checks
+  max_suggestions: 3                 # maximum suggestions to show
+  cooldown_minutes: 30               # cooldown before repeating same suggestion
+  speak_high_priority: true          # speak high-priority suggestions
+  track_files: true                  # track file interactions for suggestions
+  track_images: true                 # track image interactions for suggestions
 
 # Paths
 paths:

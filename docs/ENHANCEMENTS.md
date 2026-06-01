@@ -76,7 +76,7 @@ ollama:
 ### 3. Start JARVIS
 
 ```bash
-python main.py
+.\venv\Scripts\python.exe .\main.py
 ```
 
 ---

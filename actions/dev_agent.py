@@ -120,7 +120,7 @@ Return ONLY valid JSON — no markdown, no explanation:
       "imports": []
     }}
   ],
-  "run_command": "python main.py",
+  "run_command": "python3 main.py",
   "dependencies": ["requests"]
 }}
 

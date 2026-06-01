@@ -10,18 +10,18 @@ MARK XXXIX is a desktop AI assistant built around voice interaction, tool callin
 - Optional semantic search and retrieval support
 - Optional passive vision and screen processing
 - Optional integrations for Gmail, VS Code, Telegram, Discord, and Obsidian
-- Separate UI design workspace under `UI Design/`
+- React/Vite desktop UI under `UI/`
 
 ## Repository Layout
 
 - `main.py` - main application entry point
-- `ui.py` - UI layer used by the assistant
+- `ui.py` - legacy compatibility shim for shared UI theme imports
 - `core/` - core assistant logic, memory, monitoring, safety, and integrations
 - `actions/` - action handlers for specific tasks like browser, files, weather, and messaging
 - `memory/` - memory management, backups, and long-term storage helpers
 - `config/` - configuration loading and integration settings
 - `docs/` - setup and feature documentation
-- `UI Design/` - separate frontend and design workspace
+- `UI/` - React/Vite frontend and bundled desktop UI assets
 - `tests/` - automated tests for selected subsystems
 
 ## Requirements
@@ -89,19 +89,19 @@ See `.env.example` for the full list and default values.
 ## Run
 
 ```bash
-python main.py
+.\venv\Scripts\python.exe .\main.py
 ```
 
 The assistant will start its UI and wait for the configured API key before launching the main runtime.
 
 ## Optional UI Workspace
 
-The `UI Design/` folder is a separate frontend workspace.
+The `UI/` folder is the React frontend workspace.
 
 ```bash
-cd "UI Design"
-pnpm install
-pnpm dev
+cd UI
+npm install
+npm run dev
 ```
 
 ## Development Notes

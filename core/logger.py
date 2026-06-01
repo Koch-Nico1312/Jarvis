@@ -14,6 +14,8 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
+from core.paths import project_path
+
 
 def setup_logging(
     log_level: str = "INFO",
@@ -31,7 +33,7 @@ def setup_logging(
         backup_count: Number of backup log files to keep
     """
     if log_dir is None:
-        log_dir = Path("./logs")
+        log_dir = project_path("logs")
     
     log_dir.mkdir(parents=True, exist_ok=True)
     
@@ -44,9 +46,18 @@ def setup_logging(
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # Clear any existing handlers
+    # Clear any existing handlers and close them so temporary log files can be removed.
     root_logger = logging.getLogger()
-    root_logger.handlers.clear()
+    for handler in list(root_logger.handlers):
+        try:
+            handler.flush()
+        except Exception:
+            pass
+        try:
+            handler.close()
+        except Exception:
+            pass
+        root_logger.removeHandler(handler)
     root_logger.setLevel(numeric_level)
     
     # Console handler
@@ -61,7 +72,8 @@ def setup_logging(
         general_log,
         maxBytes=max_bytes,
         backupCount=backup_count,
-        encoding='utf-8'
+        encoding='utf-8',
+        delay=True,
     )
     file_handler.setLevel(numeric_level)
     file_handler.setFormatter(formatter)
@@ -73,7 +85,8 @@ def setup_logging(
         error_log,
         maxBytes=max_bytes,
         backupCount=backup_count,
-        encoding='utf-8'
+        encoding='utf-8',
+        delay=True,
     )
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)

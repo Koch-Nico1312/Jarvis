@@ -14,6 +14,7 @@ from core.security import (
     get_api_key_manager,
     get_rate_limiter
 )
+from core.approval_flow import get_approval_flow
 
 
 def test_input_validator_text():
@@ -159,3 +160,24 @@ def test_secure_file_operations():
         # Path outside allowed directory
         success, error = secure_ops.safe_write("/etc/passwd", "test")
         assert success is False
+
+
+def test_approval_flow_integration():
+    """Test that approval flow integrates with security."""
+    approval_flow = get_approval_flow()
+    
+    # Test that approval flow is available
+    assert approval_flow is not None
+    
+    # Test permission level
+    current_level = approval_flow.get_permission_level()
+    assert current_level in ["safe", "normal", "admin"]
+    
+    # Test that we can check actions
+    is_allowed, message = approval_flow.check_and_request_approval(
+        tool_name="file_controller",
+        action="list",
+        parameters={"path": "/tmp"}
+    )
+    # List should be allowed in normal mode
+    assert is_allowed is True

@@ -18,6 +18,7 @@ import threading
 import time
 
 from core.logger import get_logger
+from core.paths import project_path
 
 logger = get_logger(__name__)
 
@@ -45,7 +46,7 @@ class MemoryBackupManager:
         """
         self.memory_path = Path(memory_path)
         if backup_dir is None:
-            backup_dir = Path("./data/memory_backups")
+            backup_dir = project_path("data", "memory_backups")
         self.backup_dir = Path(backup_dir)
         self.max_backups = max_backups
         self.backup_interval_hours = backup_interval_hours

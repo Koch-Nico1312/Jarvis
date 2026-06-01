@@ -12,12 +12,14 @@ import sqlite3
 import json
 import hashlib
 import time
+from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 from dataclasses import dataclass, asdict
 
 from core.logger import get_logger
+from core.paths import project_path
 
 logger = get_logger(__name__)
 
@@ -37,7 +39,7 @@ class CacheManager:
     Manages caching with SQLite backend.
     """
     
-    def __init__(self, cache_dir: Path = Path("./data/cache"), default_ttl_hours: float = 24.0):
+    def __init__(self, cache_dir: Optional[Path] = None, default_ttl_hours: float = 24.0):
         """
         Initialize cache manager.
         
@@ -45,6 +47,8 @@ class CacheManager:
             cache_dir: Directory for cache database
             default_ttl_hours: Default time-to-live in hours
         """
+        if cache_dir is None:
+            cache_dir = project_path("data", "cache")
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.cache_dir / "jarvis_cache.db"
@@ -55,7 +59,7 @@ class CacheManager:
     
     def _initialize_db(self):
         """Initialize SQLite database with required tables."""
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             cursor = conn.cursor()
             
             # Main cache table
@@ -152,7 +156,7 @@ class CacheManager:
             
             metadata_str = json.dumps(metadata) if metadata else None
             
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT OR REPLACE INTO cache (key, value, created_at, expires_at, metadata, access_count, last_accessed)
@@ -178,7 +182,7 @@ class CacheManager:
             Cached value or None if not found/expired
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT value, expires_at, metadata, access_count 
@@ -232,7 +236,7 @@ class CacheManager:
             True if successful
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM cache WHERE key = ?", (key,))
                 conn.commit()
@@ -250,7 +254,7 @@ class CacheManager:
             Number of entries cleared
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 
                 # Clear expired from main cache
@@ -283,7 +287,7 @@ class CacheManager:
             Dictionary with cache statistics
         """
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 
                 # Main cache stats
@@ -296,13 +300,23 @@ class CacheManager:
                 cursor.execute("SELECT SUM(access_count) FROM cache")
                 total_access = cursor.fetchone()[0] or 0
                 
+                # Cache hit rate estimation
+                cursor.execute("SELECT SUM(access_count) FROM cache WHERE last_accessed > ?", (time.time() - 3600,))
+                recent_access = cursor.fetchone()[0] or 0
+                
                 # LLM response stats
                 cursor.execute("SELECT COUNT(*) FROM llm_responses")
                 llm_count = cursor.fetchone()[0]
                 
+                cursor.execute("SELECT SUM(access_count) FROM llm_responses")
+                llm_access = cursor.fetchone()[0] or 0
+                
                 # Embedding stats
                 cursor.execute("SELECT COUNT(*) FROM embeddings")
                 embed_count = cursor.fetchone()[0]
+                
+                cursor.execute("SELECT SUM(access_count) FROM embeddings")
+                embed_access = cursor.fetchone()[0] or 0
                 
                 # Database size
                 db_size = self.db_path.stat().st_size if self.db_path.exists() else 0
@@ -311,16 +325,142 @@ class CacheManager:
                     "main_cache": {
                         "total_entries": cache_count,
                         "expired_entries": expired_count,
-                        "total_access": total_access
+                        "total_access": total_access,
+                        "recent_access_last_hour": recent_access
                     },
-                    "llm_responses": llm_count,
-                    "embeddings": embed_count,
+                    "llm_responses": {
+                        "total_entries": llm_count,
+                        "total_access": llm_access
+                    },
+                    "embeddings": {
+                        "total_entries": embed_count,
+                        "total_access": embed_access
+                    },
                     "database_size_bytes": db_size,
                     "database_size_mb": db_size / (1024 * 1024)
                 }
                 
         except Exception as e:
             logger.error(f"Failed to get cache stats: {e}")
+            return {}
+    
+    def invalidate_pattern(self, pattern: str) -> int:
+        """
+        Invalidate all cache entries matching a pattern.
+        
+        Args:
+            pattern: Pattern to match (SQL LIKE pattern)
+        
+        Returns:
+            Number of entries invalidated
+        """
+        try:
+            with closing(sqlite3.connect(self.db_path)) as conn:
+                cursor = conn.cursor()
+                
+                # Invalidate from main cache
+                cursor.execute("DELETE FROM cache WHERE key LIKE ?", (f"%{pattern}%",))
+                cache_count = cursor.rowcount
+                
+                # Invalidate from LLM responses
+                cursor.execute("DELETE FROM llm_responses WHERE prompt_hash LIKE ?", (f"%{pattern}%",))
+                llm_count = cursor.rowcount
+                
+                # Invalidate from embeddings
+                cursor.execute("DELETE FROM embeddings WHERE text_hash LIKE ?", (f"%{pattern}%",))
+                embed_count = cursor.rowcount
+                
+                conn.commit()
+                
+                total = cache_count + llm_count + embed_count
+                logger.info(f"Invalidated {total} cache entries matching pattern: {pattern}")
+                return total
+                
+        except Exception as e:
+            logger.error(f"Failed to invalidate pattern: {e}")
+            return 0
+    
+    def invalidate_by_prefix(self, prefix: str) -> int:
+        """
+        Invalidate all cache entries with a specific prefix.
+        
+        Args:
+            prefix: Key prefix to invalidate
+        
+        Returns:
+            Number of entries invalidated
+        """
+        try:
+            with closing(sqlite3.connect(self.db_path)) as conn:
+                cursor = conn.cursor()
+                
+                # Invalidate from main cache
+                cursor.execute("DELETE FROM cache WHERE key LIKE ?", (f"{prefix}:%",))
+                cache_count = cursor.rowcount
+                
+                conn.commit()
+                
+                logger.info(f"Invalidated {cache_count} cache entries with prefix: {prefix}")
+                return cache_count
+                
+        except Exception as e:
+            logger.error(f"Failed to invalidate prefix: {e}")
+            return 0
+    
+    def get_cache_hit_rate(self, hours: int = 24) -> Dict[str, float]:
+        """
+        Calculate cache hit rate over a time period.
+        
+        Args:
+            hours: Number of hours to look back
+        
+        Returns:
+            Dictionary with hit rates for different cache types
+        """
+        try:
+            with closing(sqlite3.connect(self.db_path)) as conn:
+                cursor = conn.cursor()
+                
+                cutoff = time.time() - (hours * 3600)
+                
+                # Main cache hit rate
+                cursor.execute("""
+                    SELECT COUNT(*) FROM cache 
+                    WHERE last_accessed > ?
+                """, (cutoff,))
+                total_hits = cursor.fetchone()[0] or 0
+                
+                cursor.execute("""
+                    SELECT COUNT(*) FROM cache 
+                    WHERE created_at > ?
+                """, (cutoff,))
+                total_misses = cursor.fetchone()[0] or 0
+                
+                main_hit_rate = total_hits / (total_hits + total_misses) if (total_hits + total_misses) > 0 else 0.0
+                
+                # LLM response hit rate
+                cursor.execute("""
+                    SELECT SUM(access_count) FROM llm_responses 
+                    WHERE last_accessed > ?
+                """, (cutoff,))
+                llm_hits = cursor.fetchone()[0] or 0
+                
+                cursor.execute("""
+                    SELECT COUNT(*) FROM llm_responses 
+                    WHERE created_at > ?
+                """, (cutoff,))
+                llm_misses = cursor.fetchone()[0] or 0
+                
+                llm_hit_rate = llm_hits / (llm_hits + llm_misses) if (llm_hits + llm_misses) > 0 else 0.0
+                
+                return {
+                    "main_cache_hit_rate": main_hit_rate,
+                    "llm_response_hit_rate": llm_hit_rate,
+                    "period_hours": hours
+                }
+                
+        except Exception as e:
+            logger.error(f"Failed to calculate hit rate: {e}")
             return {}
     
     def cache_llm_response(self, prompt: str, model: str, response: str, tokens_used: Optional[int] = None, ttl_hours: float = 168.0) -> bool:
@@ -341,7 +481,7 @@ class CacheManager:
             prompt_hash = self._generate_key("llm", f"{model}:{prompt}")
             expires_at = time.time() + (ttl_hours * 3600)
             
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT OR REPLACE INTO llm_responses 
@@ -371,7 +511,7 @@ class CacheManager:
         try:
             prompt_hash = self._generate_key("llm", f"{model}:{prompt}")
             
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT response, expires_at, access_count 
@@ -424,7 +564,7 @@ class CacheManager:
             # Convert embedding to bytes
             embedding_bytes = json.dumps(embedding).encode()
             
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT OR REPLACE INTO embeddings 
@@ -454,7 +594,7 @@ class CacheManager:
         try:
             text_hash = self._generate_key("embed", f"{model}:{text}")
             
-            with sqlite3.connect(self.db_path) as conn:
+            with closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT embedding, expires_at, access_count 

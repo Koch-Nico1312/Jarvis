@@ -3,12 +3,11 @@ from __future__ import annotations
 import contextlib
 import json
 import mimetypes
-import os
+import shutil
 import subprocess
 import threading
 import time
 import webbrowser
-import sys
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -19,9 +18,11 @@ import psutil
 
 from config.config_loader import get_config
 from core.logger import get_logger
+from core.paths import project_path, resolve_project_root
 from core.performance_monitor import get_performance_monitor
 from core.performance_tracker import get_performance_tracker
 from core.session_manager import get_session_manager
+from core.ui_theme import C
 
 try:
     from PyQt6.QtCore import QUrl
@@ -40,41 +41,25 @@ except Exception:
 logger = get_logger(__name__)
 
 
-def _base_dir() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).resolve().parent
-
-
-BASE_DIR = _base_dir()
-UI_DIR = BASE_DIR / "UI"
+BASE_DIR = resolve_project_root()
+UI_DIR = project_path("UI")
 UI_DIST_DIR = UI_DIR / "dist"
-API_SETTINGS_PATH = BASE_DIR / "config" / "ui_settings.json"
 VITE_BIN = UI_DIR / "node_modules" / "vite" / "bin" / "vite.js"
 
 
-class C:
-    BG = "#00060a"
-    PANEL = "#010d14"
-    PANEL2 = "#010f18"
-    BORDER = "#0d3347"
-    BORDER_B = "#1a5c7a"
-    BORDER_A = "#0f4060"
-    PRI = "#00d4ff"
-    PRI_DIM = "#007a99"
-    PRI_GHO = "#001f2e"
-    ACC = "#ff6b00"
-    ACC2 = "#ffcc00"
-    GREEN = "#00ff88"
-    GREEN_D = "#00aa55"
-    RED = "#ff3355"
-    MUTED_C = "#ff3366"
-    TEXT = "#8ffcff"
-    TEXT_DIM = "#3a8a9a"
-    TEXT_MED = "#5ab8cc"
-    WHITE = "#d8f8ff"
-    DARK = "#000d14"
-    BAR_BG = "#011520"
+def _find_node_executable() -> Optional[str]:
+    node = shutil.which("node")
+    if node:
+        return node
+
+    for candidate in (
+        Path(r"C:\Program Files\nodejs\node.exe"),
+        Path(r"C:\Program Files (x86)\nodejs\node.exe"),
+    ):
+        if candidate.exists():
+            return str(candidate)
+
+    return None
 
 
 class _JARVISWindow(QMainWindow):
@@ -305,13 +290,13 @@ class JarvisUI:
                 "credentials_path": str(
                     self._config.get(
                         "calendar.credentials_path",
-                        "./config/gmail_credentials.json",
+                        str(project_path("config", "gmail_credentials.json")),
                     )
                 ),
                 "token_path": str(
                     self._config.get(
                         "calendar.token_path",
-                        "./config/calendar_token.json",
+                        str(project_path("config", "calendar_token.json")),
                     )
                 ),
             },
@@ -369,8 +354,15 @@ class JarvisUI:
                 "UI build toolchain is missing. Run 'npm install' in UI/ first."
             )
 
+        node_executable = _find_node_executable()
+        if not node_executable:
+            raise RuntimeError(
+                "Node.js is not available. Install Node.js or add it to PATH, "
+                "then run 'npm install' in UI/."
+            )
+
         result = subprocess.run(
-            ["node", str(VITE_BIN), "build", "--configLoader", "native"],
+            [node_executable, str(VITE_BIN), "build", "--configLoader", "native"],
             cwd=str(UI_DIR),
             capture_output=True,
             text=True,

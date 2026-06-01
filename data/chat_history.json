@@ -1,0 +1,15 @@
+{
+  "current_session": {
+    "id": "20260601-161209-c2481a14",
+    "title": "Voice session",
+    "started_at": "2026-06-01T16:12:09.756666",
+    "updated_at": "2026-06-01T16:12:09.756666",
+    "ended_at": null,
+    "messages": [],
+    "tool_results": [],
+    "summary": "",
+    "status": "active"
+  },
+  "sessions": [],
+  "updated_at": "2026-06-01T16:12:09.757665"
+}

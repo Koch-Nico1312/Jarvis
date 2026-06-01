@@ -24,6 +24,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
 from core.logger import get_logger
+from core.paths import project_path
 
 logger = get_logger(__name__)
 
@@ -33,7 +34,7 @@ class APIKeyManager:
     Manages secure storage and encryption of API keys.
     """
     
-    def __init__(self, config_dir: Path = Path("./config")):
+    def __init__(self, config_dir: Path = project_path("config")):
         """
         Initialize the API key manager.
         
