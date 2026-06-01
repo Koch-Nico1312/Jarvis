@@ -32,16 +32,32 @@ class CalendarManager:
         self.service = None
         self.credentials_path = None
         self.token_path = None
+        self.enabled = bool(self.config.get("calendar.enabled", True))
         
         # Get paths from config or use defaults
         base_dir = Path(self.config.get('paths.base_dir', '.'))
-        self.credentials_path = base_dir / "config" / "gmail_credentials.json"
-        self.token_path = base_dir / "config" / "calendar_token.json"
+        credentials_path = self.config.get(
+            "calendar.credentials_path",
+            "./config/gmail_credentials.json",
+        )
+        token_path = self.config.get(
+            "calendar.token_path",
+            "./config/calendar_token.json",
+        )
+        self.credentials_path = Path(credentials_path)
+        if not self.credentials_path.is_absolute():
+            self.credentials_path = base_dir / self.credentials_path
+        self.token_path = Path(token_path)
+        if not self.token_path.is_absolute():
+            self.token_path = base_dir / self.token_path
         
         self._authenticate()
     
     def _authenticate(self):
         """Authenticate with Calendar API"""
+        if not self.enabled:
+            print("[Calendar] ℹ️ Calendar integration disabled in config")
+            return False
         if not CALENDAR_AVAILABLE:
             print("[Calendar] ⚠️ Google API libraries not available")
             return False
@@ -357,6 +373,12 @@ def get_calendar_manager() -> CalendarManager:
     if _calendar_manager is None:
         _calendar_manager = CalendarManager()
     return _calendar_manager
+
+
+def reset_calendar_manager() -> None:
+    """Reset the cached CalendarManager so settings changes take effect."""
+    global _calendar_manager
+    _calendar_manager = None
 
 
 def calendar_manager(parameters: dict, response=None, player=None,

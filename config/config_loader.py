@@ -65,16 +65,41 @@ class Config:
                     api_keys = json.load(f)
             except Exception:
                 pass
+
+        # Load UI overrides/settings
+        self.local_settings_path = self.base_dir / "config" / "ui_settings.json"
+        local_settings = {}
+        if self.local_settings_path.exists():
+            try:
+                with open(self.local_settings_path, "r", encoding="utf-8") as f:
+                    local_settings = json.load(f) or {}
+            except Exception as e:
+                print(f"[Config] Warning: Could not load ui_settings.json: {e}")
         
-        # Merge all configurations with priority: api_keys.json < config.yaml < .env
-        self._config = {
-            **self._api_keys_to_dict(api_keys),
-            **yaml_config,
-            **self._env_to_dict(),
-        }
+        # Merge all configurations with priority:
+        # api_keys.json < config.yaml < ui_settings.json < .env
+        merged: Dict[str, Any] = {}
+        self._deep_merge(merged, self._api_keys_to_dict(api_keys))
+        self._deep_merge(merged, yaml_config)
+        self._deep_merge(merged, local_settings)
+        self._deep_merge(merged, self._env_to_dict())
+        self._config = merged
         
         # Set paths
         self._config.setdefault('paths', {})['base_dir'] = str(self.base_dir)
+
+    def _deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]) -> Dict[str, Any]:
+        """Recursively merge one dictionary into another."""
+        for key, value in source.items():
+            if (
+                key in target
+                and isinstance(target[key], dict)
+                and isinstance(value, dict)
+            ):
+                self._deep_merge(target[key], value)
+            else:
+                target[key] = value
+        return target
     
     def _env_to_dict(self) -> Dict[str, Any]:
         """Convert environment variables to nested dict"""
@@ -198,6 +223,25 @@ class Config:
         """Reload configuration from files"""
         self._config.clear()
         self._load_config()
+
+    def update_local_settings(self, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Persist UI settings overrides to config/ui_settings.json."""
+        current = {}
+        if getattr(self, "local_settings_path", None) and self.local_settings_path.exists():
+            try:
+                with open(self.local_settings_path, "r", encoding="utf-8") as f:
+                    current = json.load(f) or {}
+            except Exception:
+                current = {}
+
+        self._deep_merge(current, updates)
+        self.local_settings_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self.local_settings_path.with_suffix(".tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(current, f, indent=2, ensure_ascii=False)
+        tmp_path.replace(self.local_settings_path)
+        self.reload()
+        return current
     
     def __getitem__(self, key: str) -> Any:
         return self.get(key)

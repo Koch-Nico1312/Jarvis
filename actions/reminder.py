@@ -3,7 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 def _base_dir() -> Path:
@@ -330,3 +330,24 @@ def reminder(
 
     friendly_time = target_dt.strftime("%B %d at %I:%M %p")
     return f"Reminder set for {friendly_time}."
+
+
+def create_reminder(
+    task_name: str,
+    message: str,
+    delay_minutes: int = 0,
+) -> str:
+    """
+    Backwards-compatible helper used by morning routine workflows.
+
+    The legacy callers only need a simple reminder trigger, so we translate the
+    request into the generic scheduler path above.
+    """
+
+    target_dt = datetime.now() + timedelta(minutes=max(0, int(delay_minutes)))
+    payload = {
+        "date": target_dt.strftime("%Y-%m-%d"),
+        "time": target_dt.strftime("%H:%M"),
+        "message": message or task_name or "Reminder",
+    }
+    return reminder(payload)

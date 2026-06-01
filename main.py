@@ -36,7 +36,7 @@ except ImportError:
 
 import google.genai
 from google.genai import types
-from ui import JarvisUI
+from ui_bridge import JarvisUI
 from config.config_loader import get_config
 from core.cross_device import get_cross_device
 from core.healthcheck import build_runtime_report, format_runtime_report
@@ -49,6 +49,21 @@ from core.semantic_search import get_semantic_search
 from core.voice_emotion import get_emotion_analyzer
 from core.vscode_bridge import get_vscode_bridge
 from core.jarvis_live import JarvisLive
+from core.approval_flow import get_approval_flow
+from core.action_history import get_action_history
+from core.setup_flow import get_setup_flow, run_setup_check
+from core.permission_profiles import (
+    get_tool_metadata, disable_action, enable_action,
+    get_disabled_actions, PermissionLevel
+)
+from core.performance_tracker import get_performance_tracker
+from core.session_manager import get_session_manager
+from core.background_task_manager import get_background_task_manager
+from core.workflow_engine import get_workflow_engine
+from core.local_analyzer import get_local_analyzer
+from core.morning_routine import get_morning_routine, RoutineConfig, RoutineMode
+from memory.hybrid_retrieval import get_hybrid_retrieval
+from core.multimodal_context import get_multimodal_context
 from memory.memory_manager import (
     MEMORY_PATH, load_memory, update_memory, format_memory_for_prompt,
 )
@@ -591,10 +606,10 @@ TOOL_DECLARATIONS = [
     {
         "name": "spotify_controller",
         "description": (
-            "Controls Spotify music playback. Use for: playing songs/playlists/albums, "
-            "pause/resume, skip, volume, shuffle, repeat, queue songs, list playlists, "
-            "show currently playing, search music, and transfer playback between devices. "
-            "Use this for ANY music-related request."
+            "Controls Spotify music playback. Use for: playing songs, albums, playlists, "
+            "artists, or direct Spotify URLs/URIs; pause/resume, skip, volume, shuffle, "
+            "repeat, queue tracks, list playlists, show current playback, search music, "
+            "and transfer playback between devices. Use this for ANY music-related request."
         ),
         "parameters": {
             "type": "OBJECT",
@@ -603,11 +618,23 @@ TOOL_DECLARATIONS = [
                     "type": "STRING",
                     "description": "play | pause | resume | next | previous | current | volume | search | queue | playlists | shuffle | repeat | devices | transfer | liked"
                 },
-                "query": {"type": "STRING", "description": "Song/artist/playlist name for play/search/queue"},
+                "query": {
+                    "type": "STRING",
+                    "description": "Song, album, playlist, artist name, or Spotify URL/URI for play/search/queue"
+                },
+                "kind": {
+                    "type": "STRING",
+                    "description": "Play target: track | album | playlist | artist | any (defaults to track)"
+                },
                 "value": {"type": "INTEGER", "description": "Volume level 0-100"},
                 "state": {"type": "STRING", "description": "on/off for shuffle, off/track/context for repeat"},
                 "device_name": {"type": "STRING", "description": "Device name for transfer"},
-                "type": {"type": "STRING", "description": "Search type: track | album | playlist | artist (default: track)"},
+                "type": {
+                    "type": "STRING",
+                    "description": "Search type: track | album | playlist | artist | any (default: track)"
+                },
+                "limit": {"type": "INTEGER", "description": "Maximum search results to return (default: 5)"},
+                "refresh": {"type": "BOOLEAN", "description": "Bypass the short-lived Spotify cache"},
             },
             "required": ["action"]
         }
@@ -824,6 +851,153 @@ def main():
     def runner():
         ui.wait_for_api_key()
         
+        # Load configuration
+        config = get_config()
+        
+        # Initialize safety and approval system
+        approval_flow = get_approval_flow()
+        permission_profile = config.get("security.permission_profile", "normal")
+        approval_flow.set_permission_level(permission_profile)
+        
+        # Configure confirmation requirements
+        confirm_medium = config.get("security.confirmation_medium_risk", True)
+        confirm_high = config.get("security.confirmation_high_risk", True)
+        approval_flow.set_require_confirmation_for_medium(confirm_medium)
+        
+        # Load disabled actions from config
+        disabled_actions = config.get("security.disabled_actions", [])
+        for action in disabled_actions:
+            disable_action(action)
+        
+        logger.info(f"Safety system initialized: profile={permission_profile}, "
+                   f"confirm_medium={confirm_medium}, confirm_high={confirm_high}, "
+                   f"disabled_actions={len(disabled_actions)}")
+        
+        # Initialize action history
+        action_history = get_action_history()
+        if config.get("security.action_history_enabled", True):
+            max_size = config.get("security.action_history_max_size", 1000)
+            action_history._max_history_size = max_size
+            logger.info(f"Action history enabled with max_size={max_size}")
+        else:
+            logger.info("Action history disabled by configuration")
+        
+        # Run setup check on first start (optional)
+        setup_flow = get_setup_flow(BASE_DIR)
+        try:
+            # Only run setup check if config file doesn't exist or is new
+            config_file = BASE_DIR / "config.yaml"
+            if not config_file.exists() or config_file.stat().st_size < 100:
+                logger.info("Running first-time setup check...")
+                setup_report = setup_flow.run_all_checks()
+                if setup_report.overall_status.value in ["failed", "warning"]:
+                    logger.warning("Setup check found issues:\n" + setup_flow.format_report(verbose=True))
+                else:
+                    logger.info("Setup check passed")
+        except Exception as e:
+            logger.warning(f"Setup check failed: {e}")
+        
+        # Initialize performance tracking
+        if config.get("performance.enabled", True):
+            perf_tracker = get_performance_tracker()
+            perf_monitor = get_performance_monitor()
+            
+            # Configure thresholds
+            slow_threshold = config.get("performance.slow_operation_threshold_ms", 2000)
+            alert_threshold = config.get("performance.alert_threshold_ms", 5000)
+            perf_tracker.slow_operation_threshold_ms = slow_threshold
+            perf_tracker.alert_threshold_ms = alert_threshold
+            
+            # Start resource monitoring if enabled
+            if config.get("performance.resource_monitoring", True):
+                resource_interval = config.get("performance.resource_interval_seconds", 60)
+                perf_monitor.resource_interval_seconds = resource_interval
+                perf_monitor.start_monitoring()
+            
+            # Start background task manager if enabled
+            if config.get("performance.background_tasks_enabled", True):
+                bg_manager = get_background_task_manager()
+                bg_workers = config.get("performance.background_workers", 4)
+                bg_manager.max_workers = bg_workers
+                bg_manager.start()
+            
+            logger.info("Performance tracking system initialized")
+        else:
+            logger.info("Performance tracking disabled by configuration")
+        
+        # Initialize workflow engine
+        if config.get("workflow.enabled", True):
+            workflow_engine = get_workflow_engine()
+            max_concurrent = config.get("workflow.max_concurrent_workflows", 2)
+            workflow_engine.max_concurrent_workflows = max_concurrent
+            
+            # Configure persistence
+            if config.get("workflow.persistence_enabled", True):
+                persistence_dir = config.get("workflow.persistence_dir", "./data/workflows")
+                workflow_engine.persistence_dir = Path(persistence_dir)
+                workflow_engine.persistence_dir.mkdir(parents=True, exist_ok=True)
+                workflow_engine.persistence_file = workflow_engine.persistence_dir / "workflows.json"
+            
+            # Start executor
+            workflow_engine.start_executor()
+            
+            # Auto-cleanup old workflows
+            cleanup_hours = config.get("workflow.auto_cleanup_hours", 168)
+            workflow_engine.cleanup_old_workflows(max_age_hours=cleanup_hours)
+            
+            logger.info("Workflow engine initialized")
+        else:
+            logger.info("Workflow engine disabled by configuration")
+        
+        # Initialize local analyzer
+        if config.get("local_analysis.enabled", True):
+            local_analyzer = get_local_analyzer()
+            cache_size = config.get("local_analysis.max_cache_size", 1000)
+            local_analyzer.max_cache_size = cache_size
+            logger.info("Local analyzer initialized")
+        else:
+            logger.info("Local analyzer disabled by configuration")
+        
+        # Initialize morning routine
+        if config.get("morning_routine.enabled", False):
+            mode_str = config.get("morning_routine.mode", "manual")
+            mode = RoutineMode(mode_str) if mode_str else RoutineMode.MANUAL
+            
+            routine_config = RoutineConfig(
+                mode=mode,
+                reminder_time=config.get("morning_routine.reminder_time", "08:00"),
+                reminder_window_minutes=config.get("morning_routine.reminder_window_minutes", 60),
+                photo_directory=config.get("morning_routine.photo_directory") or None,
+                auto_analyze=config.get("morning_routine.auto_analyze", True),
+                send_reminder_if_missed=config.get("morning_routine.send_reminder_if_missed", True),
+                reminder_delay_minutes=config.get("morning_routine.reminder_delay_minutes", 120)
+            )
+            
+            morning_routine = get_morning_routine(routine_config)
+            morning_routine.start_monitoring()
+            
+            logger.info(f"Morning routine initialized (mode: {mode.value})")
+        else:
+            logger.info("Morning routine disabled by configuration")
+        
+        # Initialize hybrid retrieval
+        if config.get("memory_retrieval.enabled", True):
+            hybrid_retrieval = get_hybrid_retrieval()
+            hybrid_retrieval.semantic_weight = config.get("memory_retrieval.semantic_weight", 0.4)
+            hybrid_retrieval.keyword_weight = config.get("memory_retrieval.keyword_weight", 0.3)
+            hybrid_retrieval.time_weight = config.get("memory_retrieval.time_weight", 0.2)
+            hybrid_retrieval.confidence_weight = config.get("memory_retrieval.confidence_weight", 0.1)
+            hybrid_retrieval.max_results = config.get("memory_retrieval.max_results", 10)
+            hybrid_retrieval.min_relevance_threshold = config.get("memory_retrieval.min_relevance_threshold", 0.3)
+            
+            logger.info("Hybrid retrieval initialized")
+        else:
+            logger.info("Hybrid retrieval disabled by configuration")
+        
+        # Initialize multimodal context
+        multimodal_context = get_multimodal_context()
+        logger.info("Multimodal context processor initialized")
+        
         # Initialize memory backup manager
         backup_manager = get_backup_manager()
         backup_manager.start_automatic_backup()
@@ -851,6 +1025,7 @@ def main():
             logger.info("Shutting down...")
         finally:
             # Cleanup
+            get_session_manager().finalize_session()
             backup_manager.stop_automatic_backup()
             perf_monitor.stop_monitoring()
             logger.info("Systems shutdown complete")

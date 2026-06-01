@@ -15,6 +15,7 @@ import json
 import re
 import sys
 import threading
+import time
 import traceback
 from functools import partial
 from datetime import datetime
@@ -39,11 +40,13 @@ from core.semantic_search import get_semantic_search
 from core.voice_emotion import get_emotion_analyzer
 from core.vscode_bridge import get_vscode_bridge
 from core.session_manager import get_session_manager
+from core.approval_flow import get_approval_flow
+from core.action_history import get_action_history, ActionStatus
 from memory.memory_manager import (
     MEMORY_PATH, load_memory, update_memory, format_memory_for_prompt,
 )
 from memory.obsidian_vault import get_obsidian_bridge
-from ui import JarvisUI
+from ui_bridge import JarvisUI
 
 try:
     import sounddevice as sd
@@ -171,10 +174,20 @@ class JarvisLive:
         self.cross_device = get_cross_device()
         self.obsidian_bridge = get_obsidian_bridge()
         self.session_context = get_session_manager()
+        self.session_context.start_session(force=True)
         self.conversation_started = False
 
         # Performance monitoring
         self.perf_monitor = get_performance_monitor()
+        
+        # Approval flow for risky actions
+        self.approval_flow = get_approval_flow()
+        # Set permission level from config or default to normal
+        perm_level = self.config.get("security.permission_level", "normal")
+        self.approval_flow.set_permission_level(perm_level)
+        
+        # Action history for tracking and undo
+        self.action_history = get_action_history()
 
         self._refresh_runtime_config()
         self._tool_declarations = self._build_tool_declarations()
@@ -755,6 +768,23 @@ class JarvisLive:
         self.hud.set_status("Working")
         self.hud.set_action(name)
 
+        # Check approval for risky actions
+        # Extract the specific action from args for permission checking
+        action = args.get("action", name)
+        is_allowed, approval_message = self.approval_flow.check_and_request_approval(
+            tool_name=name,
+            action=action,
+            parameters=args
+        )
+        
+        if not is_allowed:
+            logger.warning(f"Action blocked or denied: {name} - {approval_message}")
+            self.ui.write_log(f"SEC: {approval_message}")
+            return types.FunctionResponse(
+                id=fc.id, name=name,
+                response={"result": f"Action not allowed: {approval_message}"}
+            )
+
         # Import tool functions dynamically to avoid circular imports
         from main import (
             open_app, weather_action, browser_control, file_controller,
@@ -790,7 +820,8 @@ class JarvisLive:
             self.track_obsidian_action(f"{name}: {args}")
 
         # Track performance
-        start_time = datetime.now()
+        start_perf = time.perf_counter()
+        tool_action = str(action or name)
 
         try:
             if name == "open_app":
@@ -944,7 +975,29 @@ class JarvisLive:
                 result = f"Unknown tool: {name}"
 
             # Track performance
-            duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+            duration_ms = (time.perf_counter() - start_perf) * 1000
+            if self.config.get("performance.track_tool_executions", True):
+                try:
+                    self.perf_monitor.track_tool_execution(
+                        tool_name=name,
+                        action=tool_action,
+                        duration_ms=duration_ms,
+                        success=True,
+                        parameters=args,
+                        result_size=len(str(result).encode("utf-8")),
+                    )
+                except Exception as perf_error:
+                    logger.debug("Tool execution metrics skipped: %s", perf_error)
+            if self.config.get("performance.track_latency", True):
+                try:
+                    self.perf_monitor.track_latency(
+                        operation_type="tool_execution",
+                        total_duration_ms=duration_ms,
+                        processing_time_ms=duration_ms,
+                        success=True,
+                    )
+                except Exception as perf_error:
+                    logger.debug("Latency metrics skipped: %s", perf_error)
             self.perf_monitor.track_api_call(
                 endpoint=f"tool_{name}",
                 duration_ms=duration_ms,
@@ -955,9 +1008,42 @@ class JarvisLive:
             
             # Record tool execution for session context
             self.session_context.record_tool_execution(name, args, str(result)[:300])
+            
+            # Record in action history
+            self.action_history.record_action(
+                tool_name=name,
+                action=tool_action,
+                parameters=args,
+                result=str(result)[:500],
+                status=ActionStatus.SUCCESS
+            )
 
         except Exception as e:
-            duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+            duration_ms = (time.perf_counter() - start_perf) * 1000
+            if self.config.get("performance.track_tool_executions", True):
+                try:
+                    self.perf_monitor.track_tool_execution(
+                        tool_name=name,
+                        action=tool_action,
+                        duration_ms=duration_ms,
+                        success=False,
+                        error=str(e),
+                        parameters=args,
+                        result_size=len(str(e).encode("utf-8")),
+                    )
+                except Exception as perf_error:
+                    logger.debug("Tool execution metrics skipped: %s", perf_error)
+            if self.config.get("performance.track_latency", True):
+                try:
+                    self.perf_monitor.track_latency(
+                        operation_type="tool_execution",
+                        total_duration_ms=duration_ms,
+                        processing_time_ms=duration_ms,
+                        success=False,
+                        error=str(e),
+                    )
+                except Exception as perf_error:
+                    logger.debug("Latency metrics skipped: %s", perf_error)
             self.perf_monitor.track_api_call(
                 endpoint=f"tool_{name}",
                 duration_ms=duration_ms,
@@ -969,6 +1055,15 @@ class JarvisLive:
             traceback.print_exc()
             self.proactive.track_action(name, success=False)
             self.speak_error(name, e)
+            
+            # Record failed action in history
+            self.action_history.record_action(
+                tool_name=name,
+                action=tool_action,
+                parameters=args,
+                result=str(e)[:500],
+                status=ActionStatus.FAILED
+            )
 
         if not self.ui.muted:
             self.ui.set_state("LISTENING")
