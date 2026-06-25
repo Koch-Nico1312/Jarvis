@@ -13,12 +13,12 @@ opencv-python==4.13.0.92
 numpy==2.4.6
 mss==10.2.0
 psutil==7.2.2
-comtypes==1.4.16
-pycaw==20251023
-win10toast==0.9
+comtypes==1.4.16; sys_platform == "win32"
+pycaw==20251023; sys_platform == "win32"
+win10toast==0.9; sys_platform == "win32"
 send2trash==2.1.0
 youtube-transcript-api==1.2.4
-pywinauto==0.6.9
+pywinauto==0.6.9; sys_platform == "win32"
 python-pptx==1.0.2
 pyqt6==6.11.0
 PyQt6-WebEngine==6.11.0
