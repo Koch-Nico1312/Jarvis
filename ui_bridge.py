@@ -22,8 +22,6 @@ from typing import Any, Dict, Optional
 from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
-import psutil
-
 from config.config_loader import get_config
 from core.logger import get_logger
 from core.metrics_collector import get_metrics_collector
@@ -349,6 +347,11 @@ class JarvisUI:
         return current_state_dict
 
     def _resource_snapshot(self) -> Dict[str, Any]:
+        try:
+            import psutil
+        except ImportError as exc:
+            return {"error": f"psutil is not available: {exc}"}
+
         cpu = psutil.cpu_percent(interval=None)
         memory = psutil.virtual_memory()
         disk_root = Path("C:\\") if Path("C:\\").exists() else Path("/")

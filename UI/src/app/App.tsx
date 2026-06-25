@@ -20,7 +20,11 @@ const viewTitles: Record<string, string> = {
   resources: "Ressourcen",
 };
 
-const DASHBOARD_REFRESH_MS = 12000;
+const DASHBOARD_REFRESH_MS = 2000;
+
+function roundResourceMetric(value: unknown) {
+  return Math.round(Number(value ?? 0) * 10) / 10;
+}
 
 function stableDashboardSignature(dashboard: DashboardResponse) {
   const state = dashboard.state;
@@ -43,9 +47,10 @@ function stableDashboardSignature(dashboard: DashboardResponse) {
       : null,
     resources: resources
       ? {
-          cpu_percent: Math.round(Number(resources.cpu_percent ?? 0)),
-          memory_percent: Math.round(Number(resources.memory_percent ?? 0)),
-          disk_percent: Math.round(Number(resources.disk_percent ?? 0)),
+          cpu_percent: roundResourceMetric(resources.cpu_percent),
+          memory_percent: roundResourceMetric(resources.memory_percent),
+          disk_percent: roundResourceMetric(resources.disk_percent),
+          threads: resources.threads ?? 0,
           active_tasks: resources.performance?.active_tasks ?? 0,
           current_activity: resources.performance?.current_activity ?? "idle",
           waiting_for_input: Boolean(resources.performance?.waiting_for_input),

@@ -109,6 +109,7 @@ class TestPerformanceInitializer:
 
         assert defaults["performance.resource_monitoring"] is False
         assert defaults["performance.background_tasks_enabled"] is False
+        assert defaults["performance.preload_critical_actions"] is False
         assert defaults["performance.flags.lazy_load_actions"] is True
         assert defaults["security.confirmation_high_risk"] is True
 

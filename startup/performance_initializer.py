@@ -69,7 +69,10 @@ def initialize_performance_system(action_loader_func):
         bg_manager.start()
 
     # Initialize action loader for lazy loading
-    if get_startup_setting("performance.flags.lazy_load_actions"):
+    if (
+        get_startup_setting("performance.flags.lazy_load_actions")
+        and get_startup_setting("performance.preload_critical_actions")
+    ):
         action_loader = action_loader_func()
         # Preload critical actions
         critical_actions = config.get("performance.critical_actions", ["web_search"])

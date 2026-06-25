@@ -123,7 +123,7 @@ Run in CLI mode:
 .\venv\Scripts\python.exe .\main.py --cli
 ```
 
-The startup flow checks configuration, initializes safety and performance systems, starts the UI when enabled, and then launches the assistant runtime.
+The startup flow checks configuration, initializes safety and performance systems, starts the UI when enabled, and then launches the assistant runtime. Heavy runtime pieces such as the live assistant loop, Qt/WebEngine UI bridge, optional resource metrics, and action modules are loaded lazily where possible so the first boot path stays responsive.
 
 ## Frontend Workspace
 
@@ -140,6 +140,8 @@ Build the frontend:
 ```powershell
 npm run build
 ```
+
+The resource monitor in the UI is refreshed from the dashboard API every two seconds so CPU, memory, disk, threads, and active-task state stay close to live while the assistant is running.
 
 ## Tests and Quality
 

@@ -6,16 +6,27 @@ Collects and tracks performance metrics before/after optimizations.
 
 import threading
 import time
+import logging
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import psutil
+logger = logging.getLogger(__name__)
+psutil = None
 
-# Lazy import logger to avoid circular dependency
-logger = None
+
+def _get_psutil():
+    """Import psutil only when process/system metrics are actually captured."""
+    global psutil
+    if psutil is None:
+        try:
+            import psutil as psutil_module
+        except ImportError:
+            psutil_module = False
+        psutil = psutil_module
+    return psutil if psutil is not False else None
 
 
 @dataclass
@@ -46,18 +57,13 @@ class MetricsCollector:
         self.max_snapshots = max_snapshots
         self.snapshots: deque = deque(maxlen=max_snapshots)
         self._lock = threading.Lock()
-        self._process = psutil.Process()
+        psutil_module = _get_psutil()
+        self._process = psutil_module.Process() if psutil_module is not None else None
 
         # Baseline metrics for comparison
         self._baseline: Optional[MetricSnapshot] = None
         self._operation_timers: Dict[str, float] = {}
 
-        # Lazy logger initialization
-        global logger
-        if logger is None:
-            from core.logger import get_logger
-
-            logger = get_logger(__name__)
         logger.info("Metrics collector initialized")
 
     def start_operation(self, operation_name: str) -> None:
@@ -116,12 +122,15 @@ class MetricsCollector:
             MetricSnapshot
         """
         try:
+            if self._process is None:
+                raise ImportError("psutil is not available")
             memory_info = self._process.memory_info()
             memory_mb = memory_info.rss / (1024 * 1024)
             cpu_percent = self._process.cpu_percent()
             thread_count = self._process.num_threads()
         except Exception as e:
-            logger.warning(f"Failed to capture system metrics: {e}")
+            if not isinstance(e, ImportError):
+                logger.warning(f"Failed to capture system metrics: {e}")
             memory_mb = 0.0
             cpu_percent = 0.0
             thread_count = 0

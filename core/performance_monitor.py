@@ -17,12 +17,23 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import psutil
-
 from core.logger import get_logger
 from core.paths import project_path
 
 logger = get_logger(__name__)
+psutil = None
+
+
+def _get_psutil():
+    """Import psutil only for resource snapshots."""
+    global psutil
+    if psutil is None:
+        try:
+            import psutil as psutil_module
+        except ImportError:
+            psutil_module = False
+        psutil = psutil_module
+    return psutil if psutil is not False else None
 
 
 @dataclass
@@ -491,17 +502,21 @@ class PerformanceMonitor:
             ResourceSnapshot with current metrics
         """
         try:
-            process = psutil.Process()
+            psutil_module = _get_psutil()
+            if psutil_module is None:
+                raise RuntimeError("psutil is not available")
+
+            process = psutil_module.Process()
 
             snapshot = ResourceSnapshot(
                 timestamp=datetime.now(),
-                cpu_percent=psutil.cpu_percent(interval=0.1),
-                memory_percent=psutil.virtual_memory().percent,
-                memory_mb=psutil.virtual_memory().used / (1024 * 1024),
+                cpu_percent=psutil_module.cpu_percent(interval=0.1),
+                memory_percent=psutil_module.virtual_memory().percent,
+                memory_mb=psutil_module.virtual_memory().used / (1024 * 1024),
                 disk_usage_percent=(
-                    psutil.disk_usage("/").percent
+                    psutil_module.disk_usage("/").percent
                     if Path("/").exists()
-                    else psutil.disk_usage("C:\\").percent
+                    else psutil_module.disk_usage("C:\\").percent
                 ),
                 active_threads=process.num_threads(),
             )

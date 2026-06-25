@@ -21,7 +21,7 @@ import traceback
 from datetime import datetime, timedelta
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import google.genai
 from google.genai import types
@@ -54,7 +54,9 @@ from memory.memory_manager import (
 )
 from memory.brain import get_memory_brain
 from memory.obsidian_vault import get_obsidian_bridge
-from ui_bridge import JarvisUI
+
+if TYPE_CHECKING:
+    from ui_bridge import JarvisUI
 
 try:
     import sounddevice as sd
@@ -222,7 +224,7 @@ class JarvisLive:
     - Integration with all JARVIS subsystems
     """
 
-    def __init__(self, ui: JarvisUI) -> None:
+    def __init__(self, ui: "JarvisUI") -> None:
         """
         Initialize JarvisLive instance.
 
@@ -399,8 +401,7 @@ class JarvisLive:
         Returns:
             List of tool declarations including core, feature, and plugin tools
         """
-        # Import tool declarations from main module
-        from main import FEATURE_TOOL_DECLARATIONS, TOOL_DECLARATIONS
+        from tools import FEATURE_TOOL_DECLARATIONS, TOOL_DECLARATIONS
 
         declarations = list(TOOL_DECLARATIONS)
         declarations.extend(FEATURE_TOOL_DECLARATIONS)

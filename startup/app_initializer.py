@@ -17,11 +17,9 @@ Example:
 """
 
 import sys
-from pathlib import Path
 from typing import Any, Optional
 
 from config.startup_config import BASE_DIR
-from ui_bridge import JarvisUI
 
 
 def create_ui_bridge(use_gui: bool = False) -> Any:
@@ -41,7 +39,9 @@ def create_ui_bridge(use_gui: bool = False) -> Any:
         print("Starting JARVIS with Qt window...")
         print()
         
-        # Create JarvisUI - it will handle QApplication creation internally
+        # Import the heavy Qt/WebEngine bridge only when GUI mode is actually used.
+        from ui_bridge import JarvisUI
+
         ui = JarvisUI(str(BASE_DIR / "face.png"))
     else:
         print("=" * 60)

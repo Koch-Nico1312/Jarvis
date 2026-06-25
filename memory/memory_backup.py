@@ -258,13 +258,14 @@ class MemoryBackupManager:
     def _backup_loop(self):
         """Background thread loop for automatic backups."""
         while not self._stop_event.is_set():
+            # Avoid doing disk-heavy backup work during the critical startup path.
+            if self._stop_event.wait(timeout=self.backup_interval_hours * 3600):
+                break
+
             try:
                 self.create_backup(reason="auto")
             except Exception as e:
                 logger.error(f"Automatic backup failed: {e}")
-
-            # Wait for next backup or stop event
-            self._stop_event.wait(timeout=self.backup_interval_hours * 3600)
 
     def stop_automatic_backup(self):
         """Stop automatic periodic backups."""

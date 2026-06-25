@@ -31,6 +31,7 @@ STARTUP_DEFAULTS = {
     "performance.resource_monitoring": False,
     "performance.background_tasks_enabled": False,
     "performance.background_workers": 2,
+    "performance.preload_critical_actions": False,
     "performance.flags.lazy_load_actions": True,
     "performance.flags.reduce_memory_footprint": False,
     "performance.slow_operation_threshold_ms": 2000,

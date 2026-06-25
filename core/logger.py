@@ -17,7 +17,6 @@ from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 from pathlib import Path
 from typing import Optional
 
-from core.metrics_collector import get_metrics_collector
 from core.paths import project_path
 from core.performance_flags import get_performance_flags
 
@@ -95,9 +94,12 @@ def setup_logging(
 
     # Check if async logging is enabled
     perf_flags = get_performance_flags()
-    metrics = get_metrics_collector()
 
     if perf_flags.is_enabled("async_logging"):
+        from core.metrics_collector import get_metrics_collector
+
+        metrics = get_metrics_collector()
+
         # Use QueueHandler for async logging
         log_queue = queue.Queue(-1)  # Unlimited size queue
         queue_handler = QueueHandler(log_queue)
