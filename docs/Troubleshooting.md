@@ -60,7 +60,7 @@ sudo apt-get install python3-pyqt6
 
 2. Use CLI mode without GUI:
 ```bash
-python main.py  # Runs in CLI mode without --gui flag
+python main.py --cli
 ```
 
 ## Configuration Issues

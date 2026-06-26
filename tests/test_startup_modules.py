@@ -3,7 +3,7 @@ Tests for startup modules.
 """
 
 from config.startup_config import get_startup_defaults
-from startup.app_initializer import CLIUIBridge, initialize_application
+from startup.app_initializer import CLIUIBridge, initialize_application, should_use_gui
 from startup.performance_initializer import initialize_performance_system
 from startup.safety_initializer import initialize_safety_system
 
@@ -116,29 +116,43 @@ class TestPerformanceInitializer:
 
 class TestAppInitializer:
     """Test cases for app initializer."""
-    
+
+    def test_should_use_gui_by_default(self):
+        """Desktop window mode should be the normal startup path."""
+        assert should_use_gui(["main.py"]) is True
+
+    def test_should_use_gui_false_with_cli_flag(self):
+        """CLI mode requires an explicit --cli flag."""
+        assert should_use_gui(["main.py", "--cli"]) is False
+
     def test_initialize_application_cli_mode(self):
         """Test application initialization in CLI mode."""
-        # Mock sys.argv to not include --gui
+        # Mock sys.argv to include explicit --cli
         import sys
         original_argv = sys.argv
         try:
-            sys.argv = ["main.py"]
+            sys.argv = ["main.py", "--cli"]
             use_gui, ui = initialize_application()
             assert use_gui is False
             assert isinstance(ui, CLIUIBridge)
         finally:
             sys.argv = original_argv
-    
-    def test_initialize_application_gui_mode(self):
+
+    def test_initialize_application_gui_mode(self, monkeypatch):
         """Test application initialization in GUI mode."""
-        # Mock sys.argv to include --gui
+        sentinel_ui = object()
+        monkeypatch.setattr(
+            "startup.app_initializer.create_ui_bridge",
+            lambda use_gui: sentinel_ui,
+        )
+
+        # Mock sys.argv with no --cli; GUI is the default.
         import sys
         original_argv = sys.argv
         try:
-            sys.argv = ["main.py", "--gui"]
+            sys.argv = ["main.py"]
             use_gui, ui = initialize_application()
             assert use_gui is True
-            # ui should be JarvisUI instance (or None if Qt not available)
+            assert ui is sentinel_ui
         finally:
             sys.argv = original_argv

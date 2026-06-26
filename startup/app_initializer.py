@@ -6,10 +6,10 @@ and mode selection (GUI vs CLI).
 
 Example:
     >>> from startup import initialize_application
-    >>> 
-    >>> # Initialize application (auto-detects CLI vs GUI mode)
+    >>>
+    >>> # Initialize application (defaults to GUI unless --cli is passed)
     >>> use_gui, ui = initialize_application()
-    >>> 
+    >>>
     >>> if use_gui:
     ...     print("Running in GUI mode")
     ... else:
@@ -20,6 +20,12 @@ import sys
 from typing import Any, Optional
 
 from config.startup_config import BASE_DIR
+
+
+def should_use_gui(argv: list[str] | None = None) -> bool:
+    """Return True unless the caller explicitly requested CLI mode."""
+    args = sys.argv if argv is None else argv
+    return "--cli" not in args
 
 
 def create_ui_bridge(use_gui: bool = False) -> Any:
@@ -59,20 +65,19 @@ def create_ui_bridge(use_gui: bool = False) -> Any:
 def initialize_application(use_gui: bool | None = None) -> tuple[bool, Any]:
     """
     Initialize the JARVIS application.
-    
+
     Args:
-        use_gui: If provided, forces GUI or CLI mode. If None, auto-detects from --gui argument.
-    
+        use_gui: If provided, forces GUI or CLI mode. If None, defaults to GUI unless --cli is present.
+
     Returns:
         tuple: (use_gui, ui_bridge_instance)
     """
-    # Check for --gui argument if use_gui not provided
     if use_gui is None:
-        use_gui = "--gui" in sys.argv
-    
+        use_gui = should_use_gui()
+
     # Create UI bridge
     ui = create_ui_bridge(use_gui)
-    
+
     return use_gui, ui
 
 

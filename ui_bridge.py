@@ -12,7 +12,6 @@ import subprocess
 import sys
 import threading
 import time
-import webbrowser
 from collections import deque
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -247,9 +246,20 @@ class JarvisUI:
             self._run_qt_window()
             return
 
-        if self._server_url:
+        if self._server_url and os.environ.get("JARVIS_ALLOW_BROWSER_FALLBACK"):
+            import webbrowser
+
             webbrowser.open(self._server_url, new=1, autoraise=True)
-        logger.warning("Qt WebEngine is not available. Falling back to the system browser.")
+            logger.warning(
+                "Qt WebEngine is not available. Falling back to the system browser because "
+                "JARVIS_ALLOW_BROWSER_FALLBACK is set."
+            )
+        else:
+            logger.error(
+                "Qt WebEngine is not available, so JARVIS cannot open the desktop window. "
+                "Install PyQt6-WebEngine or unset JARVIS_NO_QT. The system browser will not "
+                "be opened automatically because voice mode depends on the local desktop runtime."
+            )
         try:
             while not self._shutdown_event.wait(0.25):
                 pass

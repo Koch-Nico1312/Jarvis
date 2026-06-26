@@ -1,9 +1,9 @@
 {
   "current_session": {
-    "id": "20260625-093155-d6366cf1",
+    "id": "20260625-215752-7844831d",
     "title": "Voice session",
-    "started_at": "2026-06-25T09:31:55.941202",
-    "updated_at": "2026-06-25T09:31:55.941202",
+    "started_at": "2026-06-25T21:57:52.049595",
+    "updated_at": "2026-06-25T21:57:52.049595",
     "ended_at": null,
     "messages": [],
     "tool_results": [],
@@ -363,5 +363,5 @@
       "status": "completed"
     }
   ],
-  "updated_at": "2026-06-25T09:31:55.942202"
+  "updated_at": "2026-06-25T21:57:52.049595"
 }
