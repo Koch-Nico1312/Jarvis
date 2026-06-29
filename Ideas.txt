@@ -1,4 +1,0 @@
-- Die UI flackert und wird immer wieder schwarz 
-	Fixen!
-- Er soll sich selbst auf Befehl schließen können
-- Update die UI damit sie besser läuft, weniger Leistung verbraucht und keine optischen Fehler aufweißt
