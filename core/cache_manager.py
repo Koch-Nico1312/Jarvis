@@ -14,7 +14,7 @@ import sqlite3
 import threading
 import time
 from contextlib import closing
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -55,10 +55,18 @@ class CacheManager:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.cache_dir / "jarvis_cache.db"
         self.default_ttl = default_ttl_hours * 3600  # Convert to seconds
-        
+
+        from config.config_loader import get_config
+
+        config = get_config()
+        self.sqlite_cache_mb = int(config.get("performance.sqlite_cache_mb", 64))
+        self.sqlite_mmap_mb = int(config.get("performance.sqlite_mmap_mb", 256))
+        self.max_entries = int(config.get("performance.cache_max_entries", 50000))
+        self.max_database_mb = float(config.get("performance.cache_max_mb", 512))
+
         # Connection pool for SQLite
         self._connection_pool = []
-        self._max_pool_size = 5
+        self._max_pool_size = int(config.get("performance.connection_pool_size", 5))
         self._pool_lock = threading.Lock()
 
         self._initialize_db()
@@ -67,21 +75,21 @@ class CacheManager:
     def _get_connection(self):
         """Get a connection from the pool or create a new one."""
         from core.performance_flags import get_performance_flags
-        
+
         if get_performance_flags().is_enabled("db_connection_pooling"):
             with self._pool_lock:
                 if self._connection_pool:
                     return self._connection_pool.pop()
-        
+
         conn = sqlite3.connect(self.db_path)
-        
+
         # Enable WAL mode for better concurrency
         try:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
-            conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+            conn.execute(f"PRAGMA cache_size=-{self.sqlite_cache_mb * 1000}")
             conn.execute("PRAGMA temp_store=MEMORY")
-            conn.execute("PRAGMA mmap_size=268435456")  # 256MB memory-mapped I/O
+            conn.execute(f"PRAGMA mmap_size={self.sqlite_mmap_mb * 1024 * 1024}")
         except Exception as e:
             logger.warning(f"Failed to enable WAL mode: {e}")
         
@@ -90,7 +98,7 @@ class CacheManager:
     def _return_connection(self, conn):
         """Return a connection to the pool or close it."""
         from core.performance_flags import get_performance_flags
-        
+
         if get_performance_flags().is_enabled("db_connection_pooling"):
             with self._pool_lock:
                 if len(self._connection_pool) < self._max_pool_size:
@@ -198,6 +206,53 @@ class CacheManager:
         hash_obj = hashlib.sha256(data_str.encode())
         return f"{prefix}:{hash_obj.hexdigest()}"
 
+    def _enforce_limits(self, cursor) -> int:
+        """Keep the main cache table within configured count and disk limits."""
+        removed = 0
+        now = time.time()
+
+        cursor.execute(
+            "DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at < ?",
+            (now,),
+        )
+        removed += max(cursor.rowcount, 0)
+
+        cursor.execute("SELECT COUNT(*) FROM cache")
+        cache_count = cursor.fetchone()[0] or 0
+        overflow = max(0, cache_count - self.max_entries)
+        if overflow:
+            cursor.execute(
+                """
+                SELECT key FROM cache
+                ORDER BY COALESCE(last_accessed, created_at), access_count
+                LIMIT ?
+                """,
+                (overflow,),
+            )
+            keys = [row[0] for row in cursor.fetchall()]
+            cursor.executemany("DELETE FROM cache WHERE key = ?", [(key,) for key in keys])
+            removed += len(keys)
+
+        max_bytes = self.max_database_mb * 1024 * 1024
+        if self.db_path.exists() and self.db_path.stat().st_size > max_bytes:
+            cursor.execute("SELECT COUNT(*) FROM cache")
+            cache_count = cursor.fetchone()[0] or 0
+            trim_count = max(1, int(cache_count * 0.1)) if cache_count else 0
+            if trim_count:
+                cursor.execute(
+                    """
+                    SELECT key FROM cache
+                    ORDER BY COALESCE(last_accessed, created_at), access_count
+                    LIMIT ?
+                    """,
+                    (trim_count,),
+                )
+                keys = [row[0] for row in cursor.fetchall()]
+                cursor.executemany("DELETE FROM cache WHERE key = ?", [(key,) for key in keys])
+                removed += len(keys)
+
+        return removed
+
     def set(
         self,
         key: str,
@@ -238,8 +293,11 @@ class CacheManager:
                 """,
                     (key, value_str, time.time(), expires_at, metadata_str, time.time()),
                 )
+                removed = self._enforce_limits(cursor)
                 conn.commit()
 
+                if removed:
+                    logger.debug(f"Cache limit enforcement removed {removed} entries")
                 logger.debug(f"Cache set: {key}")
                 return True
             finally:
@@ -441,6 +499,13 @@ class CacheManager:
                     "embeddings": {"total_entries": embed_count, "total_access": embed_access},
                     "database_size_bytes": db_size,
                     "database_size_mb": db_size / (1024 * 1024),
+                    "limits": {
+                        "max_entries": self.max_entries,
+                        "max_database_mb": self.max_database_mb,
+                        "sqlite_cache_mb": self.sqlite_cache_mb,
+                        "sqlite_mmap_mb": self.sqlite_mmap_mb,
+                        "connection_pool_size": self._max_pool_size,
+                    },
                 }
             finally:
                 self._return_connection(conn)

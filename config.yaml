@@ -161,15 +161,15 @@ obsidian:
 system:
   stealth_mode: false
   log_level: "INFO"
-  max_memory_mb: 512
+  max_memory_mb: 2048
 
 # Security & Safety Settings
 security:
-  permission_profile: "normal"        # safe | normal | admin
+  permission_profile: "admin"         # safe | normal | admin
   allow_destructive_actions: true   # global override for destructive file/command operations
   mcp_enabled: true                  # enables loading MCP servers on boot
-  confirmation_medium_risk: true     # require confirmation for medium-risk actions
-  confirmation_high_risk: true      # require confirmation for high-risk actions
+  confirmation_medium_risk: false    # require confirmation for medium-risk actions
+  confirmation_high_risk: false     # require confirmation for high-risk actions
   disabled_actions: []               # list of actions to disable (e.g., ["delete", "shutdown"])
   action_history_enabled: true      # enable persistent action history
   action_history_max_size: 1000     # maximum number of history entries to keep
@@ -185,7 +185,17 @@ performance:
   resource_monitoring: true          # enable resource monitoring (CPU, RAM, etc.)
   resource_interval_seconds: 60       # interval between resource snapshots
   cache_enabled: true                # enable caching system
-  cache_ttl_hours: 24                # default cache time-to-live in hours
+  cache_ttl_hours: 72                # default cache time-to-live in hours
+  cache_max_entries: 50000           # max persistent cache rows before LRU cleanup
+  cache_max_mb: 512                  # max persistent cache database size
+  sqlite_cache_mb: 256               # SQLite page cache size for cache database
+  sqlite_mmap_mb: 512                # SQLite memory-mapped I/O size for cache database
+  connection_pool_size: 10           # max pooled SQLite cache connections
+  api_cache_ttl_minutes: 60          # API response cache time-to-live
+  api_cache_max_size: 5000           # API response cache entry limit
+  api_cache_max_bytes_mb: 256        # API response cache memory budget
+  vector_cache_ttl_hours: 6          # vector search cache time-to-live
+  vector_cache_max_size: 5000        # vector search cache entry limit
   background_tasks_enabled: true      # enable background task processing
   background_workers: 4              # number of background worker threads
   status_update_interval_ms: 500     # interval for status updates (ms)
@@ -225,13 +235,13 @@ workflow:
   default_priority: "normal"         # default workflow priority (low, normal, high, urgent)
   default_max_retries: 3             # default max retries for failed workflows
   step_timeout_seconds: 300           # timeout for individual steps (5 minutes)
-  require_confirmation_high_risk: true  # require confirmation for high-risk steps
+  require_confirmation_high_risk: false # require confirmation for high-risk steps
 
 # Local Analysis & Multimodal Settings
 local_analysis:
   enabled: true                      # enable local file and image analysis
   cache_results: true                 # cache analysis results
-  max_cache_size: 1000               # maximum cache entries
+  max_cache_size: 5000               # maximum cache entries
   supported_image_formats: ["png", "jpg", "jpeg", "webp", "bmp", "gif"]
   supported_document_formats: ["pdf", "txt", "md", "docx", "doc", "rtf"]
   analysis_timeout_seconds: 30        # timeout for analysis operations

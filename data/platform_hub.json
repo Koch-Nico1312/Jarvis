@@ -1,0 +1,1241 @@
+{
+  "solo": {
+    "enabled": true,
+    "owner_user": "u-admin",
+    "workspace_name": "Personal Jarvis",
+    "local_only": true,
+    "status": "ready",
+    "updated_at": "2026-06-29T22:32:50"
+  },
+  "users": [
+    {
+      "id": "u-admin",
+      "name": "You",
+      "email": "you@jarvis.local",
+      "roles": [
+        "owner"
+      ],
+      "groups": [
+        "personal"
+      ]
+    },
+    {
+      "id": "u-builder",
+      "name": "Agent Builder",
+      "email": "builder@jarvis.local",
+      "roles": [
+        "builder"
+      ],
+      "groups": [
+        "personal"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "personal",
+      "name": "Personal Workspace",
+      "members": [
+        "u-admin",
+        "u-builder"
+      ]
+    },
+    {
+      "id": "core",
+      "name": "Core",
+      "members": [
+        "u-admin",
+        "u-builder"
+      ]
+    },
+    {
+      "id": "research",
+      "name": "Research",
+      "members": [
+        "u-builder"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "owner",
+      "permissions": [
+        "*"
+      ]
+    },
+    {
+      "id": "admin",
+      "permissions": [
+        "users:write",
+        "groups:write",
+        "roles:write",
+        "agents:read",
+        "agents:write",
+        "agents:share",
+        "agents:execute",
+        "agents:publish",
+        "tools:read",
+        "tools:write",
+        "tools:execute",
+        "workflows:read",
+        "workflows:write",
+        "workflows:execute",
+        "evals:write",
+        "knowledge:write",
+        "artifacts:read",
+        "artifacts:write",
+        "sandbox:execute",
+        "metrics:read",
+        "identity:write",
+        "scim:write",
+        "audit:read",
+        "read"
+      ]
+    },
+    {
+      "id": "builder",
+      "permissions": [
+        "agents:read",
+        "agents:write",
+        "agents:execute",
+        "tools:read",
+        "tools:write",
+        "tools:execute",
+        "workflows:read",
+        "workflows:write",
+        "workflows:execute",
+        "evals:write",
+        "knowledge:write",
+        "artifacts:read",
+        "artifacts:write",
+        "sandbox:execute",
+        "metrics:read",
+        "read"
+      ]
+    },
+    {
+      "id": "viewer",
+      "permissions": [
+        "read",
+        "agents:read",
+        "workflows:read",
+        "artifacts:read",
+        "metrics:read"
+      ]
+    }
+  ],
+  "acls": [
+    {
+      "resource": "agent:research-copilot",
+      "subjects": [
+        {
+          "type": "group",
+          "id": "core",
+          "access": "owner"
+        }
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "id": "research-copilot",
+      "name": "Research Copilot",
+      "model": "fast",
+      "prompt": "You research, cite sources, and summarize compactly.",
+      "tools": [
+        "web_search",
+        "documents_search"
+      ],
+      "knowledge": [
+        "local-documents",
+        "obsidian-vault"
+      ],
+      "parameters": {
+        "temperature": 0.3,
+        "max_tokens": 1800,
+        "top_p": 0.9
+      },
+      "visibility": "private",
+      "owner": "u-admin",
+      "updated_at": "2026-06-29T22:32:50"
+    }
+  ],
+  "agent_packages": [],
+  "marketplace": [
+    {
+      "id": "github-sync",
+      "name": "GitHub Knowledge Sync",
+      "kind": "connector",
+      "installed": false,
+      "enabled": false,
+      "version": "1.0.0",
+      "latest_version": "1.1.0",
+      "trust": "community",
+      "review_status": "pending",
+      "checksum": "sha256:community-github-sync",
+      "signature": "unsigned",
+      "source_url": "https://plugins.jarvis.local/github-sync",
+      "description": "Keeps repositories indexed for RAG.",
+      "entrypoint": "github_sync",
+      "publisher": "community",
+      "permissions": [
+        "tools:execute"
+      ],
+      "manifest": {
+        "id": "github-sync",
+        "name": "GitHub Knowledge Sync",
+        "kind": "connector",
+        "version": "1.0.0",
+        "entrypoint": "github_sync",
+        "source_url": "https://plugins.jarvis.local/github-sync",
+        "checksum": "sha256:community-github-sync",
+        "signature": "unsigned",
+        "permissions": [
+          "tools:execute"
+        ],
+        "trust": "community",
+        "publisher": "community",
+        "risk": {
+          "level": "medium",
+          "score": 3,
+          "reasons": [
+            "community trust",
+            "unsigned"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        }
+      },
+      "risk": {
+        "level": "medium",
+        "score": 3,
+        "reasons": [
+          "community trust",
+          "unsigned"
+        ],
+        "permissions": [
+          "tools:execute"
+        ]
+      },
+      "verification": {
+        "status": "failed",
+        "checked_at": "2026-06-29T22:32:50",
+        "risk": {
+          "level": "medium",
+          "score": 3,
+          "reasons": [
+            "community trust",
+            "unsigned"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        },
+        "checks": [
+          {
+            "name": "checksum",
+            "status": "passed",
+            "detail": "sha256:community-github-sync"
+          },
+          {
+            "name": "signature",
+            "status": "failed",
+            "detail": "unsigned"
+          },
+          {
+            "name": "review",
+            "status": "failed",
+            "detail": "pending"
+          },
+          {
+            "name": "trust_policy",
+            "status": "failed",
+            "detail": "review required; signature required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "docling-ingest",
+      "name": "Docling/Tika Ingestion",
+      "kind": "extractor",
+      "installed": true,
+      "enabled": true,
+      "version": "0.4.0",
+      "latest_version": "0.4.1",
+      "trust": "verified",
+      "review_status": "approved",
+      "checksum": "sha256:verified-docling-ingest",
+      "signature": "jarvis:verified-docling-ingest",
+      "source_url": "https://plugins.jarvis.local/docling-ingest",
+      "description": "Batch extracts PDFs, scans, tables, and layouts.",
+      "entrypoint": "docling_ingest",
+      "publisher": "jarvis",
+      "permissions": [
+        "tools:execute"
+      ],
+      "manifest": {
+        "id": "docling-ingest",
+        "name": "Docling/Tika Ingestion",
+        "kind": "extractor",
+        "version": "0.4.0",
+        "entrypoint": "docling_ingest",
+        "source_url": "https://plugins.jarvis.local/docling-ingest",
+        "checksum": "sha256:verified-docling-ingest",
+        "signature": "jarvis:verified-docling-ingest",
+        "permissions": [
+          "tools:execute"
+        ],
+        "trust": "verified",
+        "publisher": "jarvis",
+        "risk": {
+          "level": "low",
+          "score": 0,
+          "reasons": [
+            "standard tool permissions"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        }
+      },
+      "risk": {
+        "level": "low",
+        "score": 0,
+        "reasons": [
+          "standard tool permissions"
+        ],
+        "permissions": [
+          "tools:execute"
+        ]
+      },
+      "verification": {
+        "status": "passed",
+        "checked_at": "2026-06-29T22:32:50",
+        "risk": {
+          "level": "low",
+          "score": 0,
+          "reasons": [
+            "standard tool permissions"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        },
+        "checks": [
+          {
+            "name": "checksum",
+            "status": "passed",
+            "detail": "sha256:verified-docling-ingest"
+          },
+          {
+            "name": "signature",
+            "status": "passed",
+            "detail": "jarvis:verified-docling-ingest"
+          },
+          {
+            "name": "review",
+            "status": "passed",
+            "detail": "approved"
+          },
+          {
+            "name": "trust_policy",
+            "status": "passed",
+            "detail": "policy passed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workflow-human-gate",
+      "name": "Human Approval Gate",
+      "kind": "workflow-node",
+      "installed": true,
+      "enabled": true,
+      "version": "1.2.1",
+      "latest_version": "1.2.1",
+      "trust": "verified",
+      "review_status": "approved",
+      "checksum": "sha256:verified-human-gate",
+      "signature": "jarvis:verified-human-gate",
+      "source_url": "https://plugins.jarvis.local/workflow-human-gate",
+      "description": "Adds human-in-the-loop workflow checkpoints.",
+      "entrypoint": "workflow_human_gate",
+      "publisher": "jarvis",
+      "permissions": [
+        "tools:execute"
+      ],
+      "manifest": {
+        "id": "workflow-human-gate",
+        "name": "Human Approval Gate",
+        "kind": "workflow-node",
+        "version": "1.2.1",
+        "entrypoint": "workflow_human_gate",
+        "source_url": "https://plugins.jarvis.local/workflow-human-gate",
+        "checksum": "sha256:verified-human-gate",
+        "signature": "jarvis:verified-human-gate",
+        "permissions": [
+          "tools:execute"
+        ],
+        "trust": "verified",
+        "publisher": "jarvis",
+        "risk": {
+          "level": "low",
+          "score": 0,
+          "reasons": [
+            "standard tool permissions"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        }
+      },
+      "risk": {
+        "level": "low",
+        "score": 0,
+        "reasons": [
+          "standard tool permissions"
+        ],
+        "permissions": [
+          "tools:execute"
+        ]
+      },
+      "verification": {
+        "status": "passed",
+        "checked_at": "2026-06-29T22:32:50",
+        "risk": {
+          "level": "low",
+          "score": 0,
+          "reasons": [
+            "standard tool permissions"
+          ],
+          "permissions": [
+            "tools:execute"
+          ]
+        },
+        "checks": [
+          {
+            "name": "checksum",
+            "status": "passed",
+            "detail": "sha256:verified-human-gate"
+          },
+          {
+            "name": "signature",
+            "status": "passed",
+            "detail": "jarvis:verified-human-gate"
+          },
+          {
+            "name": "review",
+            "status": "passed",
+            "detail": "approved"
+          },
+          {
+            "name": "trust_policy",
+            "status": "passed",
+            "detail": "policy passed"
+          }
+        ]
+      }
+    }
+  ],
+  "marketplace_policy": {
+    "require_review": true,
+    "require_signature": true,
+    "allowed_trust": [
+      "verified",
+      "community"
+    ],
+    "max_risk": "medium",
+    "permission_denylist": [
+      "system:write",
+      "filesystem:write",
+      "network:unrestricted",
+      "secrets:read"
+    ],
+    "trusted_publishers": [
+      "jarvis"
+    ],
+    "updated_at": "2026-06-29T22:32:50"
+  },
+  "marketplace_audit": [],
+  "tools": [
+    {
+      "id": "tool-openapi-weather",
+      "name": "weather_lookup",
+      "kind": "openapi",
+      "status": "ready",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        }
+      },
+      "test_result": "Ready",
+      "test_parameters": {}
+    },
+    {
+      "id": "tool-custom-summarize",
+      "name": "summarize_text",
+      "kind": "function",
+      "status": "draft",
+      "code": "return text[:500]",
+      "test_result": "Not run",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "test_parameters": {}
+    },
+    {
+      "id": "filter-nonempty-text",
+      "name": "nonempty_text",
+      "kind": "filter",
+      "status": "ready",
+      "code": "return bool(parameters.get('text', '').strip())",
+      "test_parameters": {
+        "text": "Jarvis"
+      },
+      "test_result": "Filter ready",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "pipe-normalize-text",
+      "name": "normalize_text",
+      "kind": "pipe",
+      "status": "ready",
+      "code": "return parameters.get('text', '').strip().lower()",
+      "test_parameters": {
+        "text": "  Jarvis Studio  "
+      },
+      "test_result": "Pipe ready",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "action-create-note",
+      "name": "create_note_action",
+      "kind": "action",
+      "status": "ready",
+      "code": "return {'artifact_title': parameters.get('title', 'Tool Note'), 'content': parameters.get('content', '')}",
+      "test_parameters": {
+        "title": "Tool Note",
+        "content": "Created by action"
+      },
+      "test_result": "Action ready",
+      "schema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  "mcp": {
+    "deferred": true,
+    "last_query": "",
+    "servers": [],
+    "tools": [],
+    "loaded_tools": []
+  },
+  "workflows": [
+    {
+      "id": "wf-triage",
+      "name": "Document Triage",
+      "nodes": [
+        {
+          "id": "input",
+          "type": "input",
+          "label": "Upload",
+          "x": 6,
+          "y": 42
+        },
+        {
+          "id": "extract",
+          "type": "extract",
+          "label": "Extract",
+          "x": 26,
+          "y": 42
+        },
+        {
+          "id": "route",
+          "type": "branch",
+          "label": "Needs Review?",
+          "x": 46,
+          "y": 42
+        },
+        {
+          "id": "human",
+          "type": "human",
+          "label": "Approval",
+          "x": 66,
+          "y": 20
+        },
+        {
+          "id": "loop",
+          "type": "loop",
+          "label": "Retry Extract",
+          "x": 66,
+          "y": 64
+        },
+        {
+          "id": "publish",
+          "type": "publish",
+          "label": "Report",
+          "x": 84,
+          "y": 42
+        }
+      ],
+      "edges": [
+        [
+          "input",
+          "extract"
+        ],
+        [
+          "extract",
+          "route"
+        ],
+        [
+          "route",
+          "human",
+          "low confidence"
+        ],
+        [
+          "route",
+          "publish",
+          "ready"
+        ],
+        [
+          "route",
+          "loop",
+          "retry"
+        ],
+        [
+          "loop",
+          "extract"
+        ],
+        [
+          "human",
+          "publish"
+        ]
+      ],
+      "canvas": {
+        "zoom": 1,
+        "supports": [
+          "branching",
+          "human-in-the-loop",
+          "loops",
+          "routing"
+        ]
+      },
+      "status": "draft",
+      "updated_at": "2026-06-29T22:32:50",
+      "version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "created_at": "2026-06-29T22:32:50",
+          "nodes": [
+            {
+              "id": "input",
+              "type": "input",
+              "label": "Upload",
+              "x": 6,
+              "y": 42
+            },
+            {
+              "id": "extract",
+              "type": "extract",
+              "label": "Extract",
+              "x": 26,
+              "y": 42
+            },
+            {
+              "id": "route",
+              "type": "branch",
+              "label": "Needs Review?",
+              "x": 46,
+              "y": 42
+            },
+            {
+              "id": "human",
+              "type": "human",
+              "label": "Approval",
+              "x": 66,
+              "y": 20
+            },
+            {
+              "id": "loop",
+              "type": "loop",
+              "label": "Retry Extract",
+              "x": 66,
+              "y": 64
+            },
+            {
+              "id": "publish",
+              "type": "publish",
+              "label": "Report",
+              "x": 84,
+              "y": 42
+            }
+          ],
+          "edges": [
+            [
+              "input",
+              "extract"
+            ],
+            [
+              "extract",
+              "route"
+            ],
+            [
+              "route",
+              "human",
+              "low confidence"
+            ],
+            [
+              "route",
+              "publish",
+              "ready"
+            ],
+            [
+              "route",
+              "loop",
+              "retry"
+            ],
+            [
+              "loop",
+              "extract"
+            ],
+            [
+              "human",
+              "publish"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "run-demo",
+      "workflow_id": "wf-triage",
+      "status": "completed",
+      "started_at": "2026-06-29T22:32:50",
+      "steps": [
+        {
+          "node": "input",
+          "status": "completed",
+          "input": "scan.pdf",
+          "output": "1 file",
+          "latency_ms": 18,
+          "retries": 0
+        },
+        {
+          "node": "extract",
+          "status": "completed",
+          "input": "scan.pdf",
+          "output": "tables + text",
+          "latency_ms": 242,
+          "retries": 0
+        },
+        {
+          "node": "route",
+          "status": "completed",
+          "input": "confidence=.78",
+          "output": "human",
+          "latency_ms": 12,
+          "retries": 0
+        }
+      ]
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "eval-support",
+      "name": "Support Prompt Arena",
+      "agents": [
+        "research-copilot",
+        "research-copilot-v2"
+      ],
+      "dataset": "golden-support-20",
+      "status": "passing",
+      "elo": {
+        "research-copilot": 1240,
+        "research-copilot-v2": 1216
+      },
+      "regressions": 0,
+      "last_score": 0.92,
+      "baseline": "research-copilot",
+      "challenger": "research-copilot-v2",
+      "regression_gate": {
+        "min_score": 0.8,
+        "max_regressions": 0
+      }
+    }
+  ],
+  "evaluation_datasets": [
+    {
+      "id": "golden-support-20",
+      "name": "Golden Support 20",
+      "cases": [
+        {
+          "id": "case-1",
+          "input": "Summarize refund policy",
+          "expected": "Clear refund summary",
+          "rubric": "groundedness"
+        },
+        {
+          "id": "case-2",
+          "input": "Route urgent outage",
+          "expected": "Escalate and draft response",
+          "rubric": "actionability"
+        }
+      ]
+    }
+  ],
+  "evaluation_runs": [
+    {
+      "id": "eval-run-demo",
+      "evaluation_id": "eval-support",
+      "dataset": "golden-support-20",
+      "status": "passing",
+      "score": 0.92,
+      "regressions": 0,
+      "winner": "research-copilot",
+      "baseline": "research-copilot",
+      "challenger": "research-copilot-v2",
+      "elo_delta": {
+        "research-copilot": 8,
+        "research-copilot-v2": -3
+      },
+      "gate": {
+        "status": "passed",
+        "min_score": 0.8,
+        "max_regressions": 0
+      },
+      "pairs": [
+        {
+          "case_id": "case-1",
+          "baseline": "research-copilot",
+          "challenger": "research-copilot-v2",
+          "winner": "research-copilot",
+          "margin": 0.02
+        },
+        {
+          "case_id": "case-2",
+          "baseline": "research-copilot",
+          "challenger": "research-copilot-v2",
+          "winner": "research-copilot",
+          "margin": 0.01
+        }
+      ],
+      "cases": [
+        {
+          "case_id": "case-1",
+          "agent": "research-copilot",
+          "score": 0.94,
+          "winner": true,
+          "regression": false
+        },
+        {
+          "case_id": "case-2",
+          "agent": "research-copilot",
+          "score": 0.9,
+          "winner": true,
+          "regression": false
+        }
+      ],
+      "created_at": "2026-06-29T22:32:50"
+    }
+  ],
+  "metrics": [
+    {
+      "scope": "research-copilot",
+      "model": "fast",
+      "tool": "documents_search",
+      "user": "u-admin",
+      "agent": "research-copilot",
+      "workflow": "wf-triage",
+      "tokens": 42100,
+      "cost": 0.84,
+      "latency_ms": 1180,
+      "tool_calls": 36
+    },
+    {
+      "scope": "summarize_text",
+      "model": "local",
+      "tool": "summarize_text",
+      "user": "u-builder",
+      "agent": "research-copilot",
+      "workflow": "wf-triage",
+      "tokens": 9300,
+      "cost": 0.0,
+      "latency_ms": 420,
+      "tool_calls": 12
+    }
+  ],
+  "metric_events": [],
+  "audit_events": [],
+  "knowledge": [
+    {
+      "id": "local-documents",
+      "source": "Folder",
+      "target": "Documents",
+      "uri": "Documents",
+      "status": "synced",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + reranker",
+      "vector_db": "chroma",
+      "schedule": "watch",
+      "connector_status": "ready",
+      "watch_mode": true,
+      "next_sync": "watching"
+    },
+    {
+      "id": "obsidian-vault",
+      "source": "Folder",
+      "target": "Obsidian",
+      "uri": "memory",
+      "status": "watching",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + reranker",
+      "vector_db": "faiss",
+      "schedule": "watch",
+      "connector_status": "ready",
+      "watch_mode": true,
+      "next_sync": "watching"
+    },
+    {
+      "id": "github-main",
+      "source": "GitHub",
+      "target": "Repository Index",
+      "uri": "https://github.com/example/jarvis",
+      "status": "scheduled",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + cross-encoder reranker",
+      "vector_db": "qdrant",
+      "schedule": "*/15 * * * *",
+      "connector_status": "ready",
+      "watch_mode": false,
+      "next_sync": "2026-06-29T22:47:50"
+    },
+    {
+      "id": "drive-personal",
+      "source": "Drive",
+      "target": "Personal Drive",
+      "uri": "drive://personal",
+      "status": "optional",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + cross-encoder reranker",
+      "vector_db": "chroma",
+      "schedule": "manual",
+      "connector_status": "ready",
+      "watch_mode": false,
+      "next_sync": ""
+    },
+    {
+      "id": "s3-archive",
+      "source": "S3",
+      "target": "Archive Bucket",
+      "uri": "s3://jarvis-archive",
+      "status": "scheduled",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + cross-encoder reranker",
+      "vector_db": "pgvector",
+      "schedule": "daily",
+      "connector_status": "ready",
+      "watch_mode": false,
+      "next_sync": "2026-06-30T22:32:50"
+    },
+    {
+      "id": "confluence-docs",
+      "source": "Confluence",
+      "target": "Product Space",
+      "uri": "confluence://product",
+      "status": "scheduled",
+      "last_sync": "2026-06-29T22:32:50",
+      "rag": "hybrid: bm25 + vector + cross-encoder reranker",
+      "vector_db": "weaviate",
+      "schedule": "hourly",
+      "connector_status": "ready",
+      "watch_mode": false,
+      "next_sync": "2026-06-29T23:32:50"
+    }
+  ],
+  "knowledge_runs": [],
+  "knowledge_scheduler_runs": [],
+  "knowledge_indexes": {},
+  "knowledge_searches": [],
+  "extraction": {
+    "engines": [
+      "Docling",
+      "Tika",
+      "OCR"
+    ],
+    "engine_config": {
+      "Docling": {
+        "tables": true,
+        "layout": true,
+        "ocr": true,
+        "batch_size": 50
+      },
+      "Tika": {
+        "tables": false,
+        "layout": false,
+        "ocr": false,
+        "batch_size": 100
+      },
+      "OCR": {
+        "tables": true,
+        "layout": true,
+        "ocr": true,
+        "batch_size": 25
+      }
+    },
+    "batch_queue": [],
+    "runs": [],
+    "tables": true,
+    "layouts": true,
+    "scans": true,
+    "artifact_dir": "data\\ingestion"
+  },
+  "artifacts": [
+    {
+      "id": "artifact-dashboard",
+      "title": "Operations Snapshot",
+      "kind": "dashboard",
+      "content": "<section>Live metrics</section>",
+      "version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "created_at": "2026-06-29T22:32:50",
+          "content": "<section>Live metrics</section>"
+        }
+      ],
+      "render_status": "ready",
+      "updated_at": "2026-06-29T22:32:50",
+      "dependencies": [],
+      "created_by": "u-admin"
+    },
+    {
+      "id": "artifact-flow",
+      "title": "Triage Flow",
+      "kind": "mermaid",
+      "content": "flowchart LR\nA-->B",
+      "version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "created_at": "2026-06-29T22:32:50",
+          "content": "flowchart LR\nA-->B"
+        }
+      ],
+      "render_status": "ready",
+      "updated_at": "2026-06-29T22:32:50",
+      "dependencies": [],
+      "created_by": "u-admin"
+    }
+  ],
+  "sandbox": {
+    "enabled": true,
+    "languages": [
+      "python",
+      "javascript"
+    ],
+    "runs": [],
+    "artifact_dir": "data\\sandbox_artifacts",
+    "policy": {
+      "network": "disabled",
+      "filesystem": "uploads-only",
+      "timeout_seconds": 5,
+      "max_output_chars": 4000,
+      "max_upload_files": 10,
+      "max_upload_bytes": 200000,
+      "blocked_imports": [
+        "ftplib",
+        "http",
+        "os",
+        "pathlib",
+        "requests",
+        "shutil",
+        "socket",
+        "subprocess",
+        "urllib"
+      ],
+      "blocked_calls": [
+        "__import__",
+        "compile",
+        "eval",
+        "exec",
+        "input",
+        "open"
+      ]
+    },
+    "audit": []
+  },
+  "publishing": [
+    {
+      "id": "pub-chat",
+      "agent_id": "research-copilot",
+      "kind": "embeddable-chat",
+      "status": "draft",
+      "url": "/embed/research-copilot",
+      "policy": {
+        "auth": "workspace",
+        "cors": [
+          "http://localhost:5173"
+        ],
+        "rate_limit_per_minute": 60,
+        "allowed_groups": [
+          "personal"
+        ],
+        "secret_refs": [],
+        "api_key_hashes": [],
+        "api_keys": [],
+        "audit_invocations": true
+      }
+    },
+    {
+      "id": "pub-mcp",
+      "agent_id": "research-copilot",
+      "kind": "mcp-server",
+      "status": "draft",
+      "url": "/mcp/research-copilot",
+      "policy": {
+        "auth": "api-key",
+        "cors": [],
+        "rate_limit_per_minute": 120,
+        "allowed_groups": [
+          "personal"
+        ],
+        "secret_refs": [
+          "JARVIS_MCP_TOKEN"
+        ],
+        "api_key_hashes": [],
+        "api_keys": [],
+        "audit_invocations": true
+      }
+    }
+  ],
+  "invocation_audit": [],
+  "deployment": {
+    "docker_compose": "docker-compose.yml",
+    "dockerfile": "Dockerfile",
+    "kubernetes": "helm-ready",
+    "helm_chart": "deploy/helm/jarvis",
+    "postgres": "compose+helm-ready",
+    "postgres_schema": "deploy/postgres/migrations/001_platform_hub.sql",
+    "persistence": {
+      "backend": "json",
+      "status": "ready",
+      "path": "data\\platform_hub.json"
+    },
+    "migrations": {
+      "directory": "deploy/postgres/migrations",
+      "applied": [],
+      "pending": [],
+      "catalog": [],
+      "last_check": null
+    },
+    "redis": "compose+helm-ready",
+    "storage": "persistent-volume+s3/minio-ready",
+    "scaling": "horizontal-ready",
+    "env_mapping": {
+      "postgres": "JARVIS_POSTGRES_URL",
+      "redis": "JARVIS_REDIS_URL",
+      "s3_endpoint": "JARVIS_S3_ENDPOINT",
+      "s3_bucket": "JARVIS_S3_BUCKET",
+      "storage_backend": "JARVIS_STORAGE_BACKEND"
+    },
+    "readiness": {
+      "status": "unknown",
+      "checks": []
+    }
+  },
+  "identity_providers": [
+    {
+      "id": "local",
+      "name": "Local Accounts",
+      "type": "local",
+      "status": "enabled",
+      "issuer": "jarvis://local",
+      "client_id": "",
+      "scim_enabled": false,
+      "last_test": "2026-06-29T22:32:50"
+    },
+    {
+      "id": "oidc-main",
+      "name": "Primary OIDC",
+      "type": "oidc",
+      "status": "configured",
+      "issuer": "https://login.example.com",
+      "client_id": "jarvis",
+      "scim_enabled": true,
+      "last_test": null
+    }
+  ],
+  "scim_events": [],
+  "sso": {
+    "oidc": "configured",
+    "ldap": "configurable",
+    "scim": "enabled",
+    "providers": [
+      "local",
+      "oidc"
+    ],
+    "default_provider": "local",
+    "provisioning": "scim-ready",
+    "login_flows": [],
+    "sessions": [],
+    "events": []
+  },
+  "subagents": [
+    {
+      "id": "subagent-research",
+      "name": "Researcher",
+      "parent": "research-copilot",
+      "role": "gather evidence",
+      "status": "available"
+    },
+    {
+      "id": "subagent-writer",
+      "name": "Writer",
+      "parent": "research-copilot",
+      "role": "compact final answer",
+      "status": "available"
+    }
+  ],
+  "agent_chain_runs": [],
+  "solo_quickstarts": [],
+  "solo_audits": [],
+  "companion": {
+    "browser_extension": "manifest-ready",
+    "manifest_path": "extensions/browser-companion/manifest.json",
+    "mobile_ui": "responsive",
+    "remote_access": "guarded",
+    "workspace_files": true,
+    "terminal": true,
+    "workspace_endpoint": "/api/companion/workspace",
+    "file_endpoint": "/api/companion/file",
+    "terminal_endpoint": "/api/companion/terminal",
+    "pairing_endpoint": "/api/companion/pair",
+    "session_endpoint": "/api/companion/session",
+    "workspace_snapshot_endpoint": "/api/companion/mobile-workspace",
+    "allowed_terminal_commands": [
+      "git status",
+      "python version",
+      "list files"
+    ],
+    "pairing_required": true,
+    "pairing_codes": [],
+    "sessions": []
+  },
+  "updated_at": "2026-06-29T22:32:50"
+}

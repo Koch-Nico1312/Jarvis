@@ -156,3 +156,27 @@ class TestAppInitializer:
             assert ui is sentinel_ui
         finally:
             sys.argv = original_argv
+
+    def test_qt_webengine_diagnostic_includes_import_failure(self, monkeypatch):
+        """Qt startup failures should preserve the actionable import error."""
+        import ui_bridge
+
+        monkeypatch.setattr(ui_bridge, "QT_WEBENGINE_AVAILABLE", False)
+        monkeypatch.setattr(
+            ui_bridge,
+            "QT_WEBENGINE_IMPORT_ERROR",
+            ImportError("No module named PyQt6.QtWebEngineWidgets"),
+        )
+
+        diagnostic = ui_bridge.get_qt_webengine_diagnostic()
+
+        assert "Qt WebEngine is not available" in diagnostic
+        assert "No module named PyQt6.QtWebEngineWidgets" in diagnostic
+
+    def test_qt_webengine_recovery_hint_respects_no_qt_env(self, monkeypatch):
+        """When Qt is explicitly disabled, the hint should say how to re-enable it."""
+        import ui_bridge
+
+        monkeypatch.setenv("JARVIS_NO_QT", "1")
+
+        assert "Unset JARVIS_NO_QT" in ui_bridge.get_qt_webengine_recovery_hint()

@@ -98,6 +98,9 @@ def _get_action_module(action_name: str):
 
 def __getattr__(name: str):
     """Lazy compatibility exports for action functions used by JarvisLive."""
+    if name.startswith("__"):
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
     aliases = {
         "weather_action": ("weather_report", "weather_action"),
         "web_search_action": ("web_search", "web_search"),
@@ -149,6 +152,8 @@ def _get_action_loader():
     """Get the global action loader instance."""
     global _action_loader
     if _action_loader is None:
+        from core.action_loader import get_action_loader
+
         _action_loader = get_action_loader()
     return _action_loader
 
@@ -244,13 +249,29 @@ def main() -> None:
     if use_gui:
         try:
             from PyQt6.QtWidgets import QApplication
+            from PyQt6.QtWebEngineWidgets import QWebEngineView as _QWebEngineView
+
+            _QWebEngineView
             # Check if QApplication already exists
             if QApplication.instance() is None:
                 app = QApplication(sys.argv)
                 app.setApplicationName("JARVIS")
         except Exception as e:
-            logger.warning(f"Failed to create QApplication: {e}, falling back to CLI mode")
-            use_gui = False
+            if os.environ.get("JARVIS_ALLOW_BROWSER_FALLBACK"):
+                logger.warning(
+                    "Failed to initialize the Qt WebEngine desktop window: %s. "
+                    "Browser fallback is enabled, so JARVIS will start the local UI server.",
+                    e,
+                )
+            else:
+                logger.warning(
+                    "Failed to initialize the Qt WebEngine desktop window: %s. "
+                    "Falling back to CLI mode. Install GUI dependencies in the active "
+                    "environment with `python -m pip install -r requirements.txt`, or set "
+                    "JARVIS_ALLOW_BROWSER_FALLBACK=1 to open the local UI in a browser.",
+                    e,
+                )
+                use_gui = False
 
     if not ensure_gemini_api_key(use_gui=use_gui):
         logger.error("JARVIS cannot start without a valid Gemini API key.")

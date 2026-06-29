@@ -689,6 +689,87 @@ function getMockData<T>(path: string): T {
   return {} as T;
 }
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function normalizePlatformPayload(payload: PlatformPayload): PlatformPayload {
+  const source = asRecord(payload) as Partial<PlatformPayload>;
+  const extraction = asRecord(source.extraction);
+  const sandbox = asRecord(source.sandbox);
+
+  return {
+    ...(source as PlatformPayload),
+    solo: source.solo,
+    solo_status: source.solo_status,
+    users: asArray(source.users),
+    groups: asArray(source.groups),
+    roles: asArray(source.roles),
+    acls: asArray(source.acls),
+    audit_events: asArray(source.audit_events),
+    agents: asArray(source.agents),
+    agent_packages: asArray(source.agent_packages),
+    marketplace: asArray(source.marketplace),
+    marketplace_policy: source.marketplace_policy,
+    marketplace_audit: asArray(source.marketplace_audit),
+    tools: asArray(source.tools),
+    mcp: {
+      deferred: Boolean(source.mcp?.deferred),
+      last_query: String(source.mcp?.last_query ?? ""),
+      tools: asArray(source.mcp?.tools),
+      loaded_tools: asArray(source.mcp?.loaded_tools),
+      servers: asArray(source.mcp?.servers),
+    },
+    tool_executions: asArray(source.tool_executions),
+    workflows: asArray(source.workflows),
+    runs: asArray(source.runs),
+    evaluations: asArray(source.evaluations),
+    evaluation_datasets: asArray(source.evaluation_datasets),
+    evaluation_runs: asArray(source.evaluation_runs),
+    metrics: asArray(source.metrics),
+    metric_events: asArray(source.metric_events),
+    metrics_aggregate: source.metrics_aggregate ?? {},
+    knowledge: asArray(source.knowledge),
+    knowledge_runs: asArray(source.knowledge_runs),
+    knowledge_scheduler_runs: asArray(source.knowledge_scheduler_runs),
+    knowledge_searches: asArray(source.knowledge_searches),
+    extraction: {
+      ...extraction,
+      engines: asArray(extraction.engines),
+      engine_config: asRecord(extraction.engine_config),
+      batch_queue: asArray(extraction.batch_queue),
+      runs: asArray(extraction.runs),
+    } as PlatformPayload["extraction"],
+    artifacts: asArray(source.artifacts),
+    sandbox: {
+      ...sandbox,
+      enabled: Boolean(sandbox.enabled),
+      languages: asArray(sandbox.languages),
+      runs: asArray(sandbox.runs),
+      policy: asRecord(sandbox.policy),
+      audit: asArray(sandbox.audit),
+    } as PlatformPayload["sandbox"],
+    publishing: asArray(source.publishing),
+    deployment: asRecord(source.deployment),
+    sso: asRecord(source.sso),
+    identity_providers: asArray(source.identity_providers),
+    scim_events: asArray(source.scim_events),
+    subagents: asArray(source.subagents),
+    agent_chain_runs: asArray(source.agent_chain_runs),
+    solo_quickstarts: asArray(source.solo_quickstarts),
+    solo_audits: asArray(source.solo_audits),
+    companion: asRecord(source.companion),
+    counts: asRecord(source.counts) as Record<string, number>,
+    updated_at: source.updated_at ?? new Date().toISOString(),
+  };
+}
+
 export const jarvisApi = {
   getDashboard: () => requestJson<DashboardResponse>("/api/dashboard"),
   getCockpit: () => requestJson<CockpitPayload>("/api/cockpit"),
@@ -703,7 +784,7 @@ export const jarvisApi = {
   getPermissions: () => requestJson<PermissionsPayload>("/api/permissions"),
   getReliability: () => requestJson<ReliabilityPayload>("/api/reliability"),
   getDevices: () => requestJson<DevicesPayload>("/api/devices"),
-  getPlatform: () => requestJson<PlatformPayload>("/api/platform"),
+  getPlatform: () => requestJson<PlatformPayload>("/api/platform").then(normalizePlatformPayload),
   getSettings: () => requestJson("/api/settings"),
   getCalendarStatus: () => requestJson("/api/calendar/status"),
   getChatSession: (sessionId: string) =>
@@ -762,7 +843,10 @@ export const jarvisApi = {
     strictRequestJson<{ status?: string; error?: string; result: unknown; platform: PlatformPayload }>("/api/platform/action", {
       method: "POST",
       body: JSON.stringify({ action, payload }),
-    }),
+    }).then((response) => ({
+      ...response,
+      platform: normalizePlatformPayload(response.platform),
+    })),
   startNewSession: () =>
     requestJson("/api/session/new", {
       method: "POST",

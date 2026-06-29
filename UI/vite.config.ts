@@ -37,6 +37,10 @@ export default defineConfig({
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
+  build: {
+    chunkSizeWarningLimit: 1000,
+  },
+
   server: {
     proxy: {
       '/api': {

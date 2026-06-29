@@ -1,0 +1,11 @@
+{
+  "cooldowns": {
+    "repetitive:browser_control": {
+      "key": "repetitive:browser_control",
+      "expires_at": "2026-06-29T22:55:24.717625",
+      "reason": "suggestion cooldown"
+    }
+  },
+  "dismissed": {},
+  "mutes": {}
+}

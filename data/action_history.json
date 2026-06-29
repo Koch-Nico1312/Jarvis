@@ -61,5 +61,236 @@
       "created_at": "2026-06-24T20:27:51.357853"
     },
     "can_undo": false
+  },
+  {
+    "id": "20260629_222406_687084",
+    "action_type": "api_call",
+    "tool_name": "browser_control",
+    "action": "go_to",
+    "parameters": {
+      "browser": "firefox",
+      "action": "go_to",
+      "url": "https://www.youtube.com"
+    },
+    "result": "Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:blank\n<launched> pid=8764\n[pid=8764][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE\n[pid=8764][err] [ERROR shell_windows::limited_access_features] Er",
+    "status": "success",
+    "timestamp": "2026-06-29T22:24:06.687084",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:24:06.687084"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222435_485669",
+    "action_type": "api_call",
+    "tool_name": "browser_control",
+    "action": "go_to",
+    "parameters": {
+      "action": "go_to",
+      "url": "https://www.youtube.com"
+    },
+    "result": "Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:blank\n<launched> pid=23208\n[pid=23208][err] [ERROR shell_windows::limited_access_features] Error generating feature token: NS_ERROR_FAILURE\n[pid=23208][err] [ERROR shell_windows::limited_access_features]",
+    "status": "success",
+    "timestamp": "2026-06-29T22:24:35.485669",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:24:35.485669"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222457_319031",
+    "action_type": "api_call",
+    "tool_name": "browser_control",
+    "action": "go_to",
+    "parameters": {
+      "browser": "chrome",
+      "action": "go_to",
+      "url": "https://www.youtube.com"
+    },
+    "result": "Opened: https://www.youtube.com/",
+    "status": "success",
+    "timestamp": "2026-06-29T22:24:57.319031",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:24:57.319031"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222528_367790",
+    "action_type": "api_call",
+    "tool_name": "web_search",
+    "action": "web_search",
+    "parameters": {
+      "query": "AI news 2026-06-29"
+    },
+    "result": "Here's a summary of key AI news from June 29, 2026:\n\n**1. EU Finalizes Simplified AI Regulations and Bans Non-Consensual Content Generation:**\nThe Council of the European Union has given its final approval to new regulations aimed at simplifying and streamlining existing AI rules, part of the 'Omnibus VII' legislative package. This new law is expected to provide greater legal certainty and a more harmonized implementation of AI rules across the EU, fostering innovation and growth in the single m",
+    "status": "success",
+    "timestamp": "2026-06-29T22:25:28.367790",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:25:28.367790"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222659_820995",
+    "action_type": "file_operation",
+    "tool_name": "file_controller",
+    "action": "create_file",
+    "parameters": {
+      "path": "C:\\Users\\kochn_lrehka5\\Desktop\\allgemein.txt",
+      "name": "allgemein.txt"
+    },
+    "result": "File created: allgemein.txt",
+    "status": "success",
+    "timestamp": "2026-06-29T22:26:59.820995",
+    "undo_data": {
+      "strategy": "remove_created_resource",
+      "steps": [
+        {
+          "action": "delete",
+          "path": "C:\\Users\\kochn_lrehka5\\Desktop\\allgemein.txt"
+        }
+      ],
+      "automatic": false
+    },
+    "undo_plan": {
+      "strategy": "remove_created_resource",
+      "steps": [
+        {
+          "action": "delete",
+          "path": "C:\\Users\\kochn_lrehka5\\Desktop\\allgemein.txt"
+        }
+      ],
+      "automatic": false,
+      "requires_confirmation": true,
+      "notes": "Delete the created resource after confirmation."
+    },
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:26:59.820995"
+    },
+    "can_undo": true
+  },
+  {
+    "id": "20260629_222659_824500",
+    "action_type": "file_operation",
+    "tool_name": "file_controller",
+    "action": "create_file",
+    "parameters": {
+      "name": "allgemein.txt",
+      "action": "create_file",
+      "content": "hallo",
+      "path": "desktop"
+    },
+    "result": "File created: allgemein.txt",
+    "status": "success",
+    "timestamp": "2026-06-29T22:26:59.824500",
+    "undo_data": null,
+    "undo_plan": {
+      "strategy": "remove_created_resource",
+      "steps": [
+        {
+          "action": "delete",
+          "path": "desktop"
+        }
+      ],
+      "automatic": false,
+      "requires_confirmation": true,
+      "notes": "Delete the created resource after confirmation."
+    },
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:26:59.824500"
+    },
+    "can_undo": true
+  },
+  {
+    "id": "20260629_222749_748472",
+    "action_type": "api_call",
+    "tool_name": "self_dev_agent",
+    "action": "plan",
+    "parameters": {
+      "use_model": true,
+      "action": "plan",
+      "goal": "Suggest areas for further development and improvement"
+    },
+    "result": "{\"goal\": \"Suggest areas for further development and improvement\", \"checklist\": [\"Create or switch to a codex/self-dev branch.\", \"Inspect current git status and avoid overwriting unrelated user changes.\", \"Make the smallest code change that addresses the goal.\", \"Run focused tests first, then broader tests if the focused pass is clean.\", \"Review git diff for security, filesystem, network, and regression risk.\", \"Produce a merge report and wait for human merge approval.\"], \"model_plan\": \"This plan outlines a general framework for a safe code change. To make it truly robust, it would need to be tailored with specific details about your system, the nature of the change, your tech stack, and your existing CI/CD pipelines.\\n\\n---\\n\\n## Safe Code Change Plan\\n\\n### **Context & Assumptions (Crucial - Please Fill In):**\\n\\n*   **System/Application Name:** (e.g., \\\"E-commerce Frontend Service,\\\" \\\"Backend Microservice X,\\\" \\\"Database Schema Y\\\")\\n*   **Type of Code Change:** (e.g., \\\"New Feature Implementation,\\\" \\\"Bug Fix,\\\" \\\"Performance Optimization,\\\" \\\"Security Patch,\\\" \\\"Infrastructure Change,\\\" \\\"Data Migration\\\")\\n*   **Magnitude of Change:** (e.g., \\\"Small, isolated,\\\" \\\"Medium, impacts multiple modules,\\\" \\\"Large, core system change\\\")\\n*   **Current Production Environment:** (e.g., \\\"Kubernetes,\\\" \\\"AWS EC2,\\\" \\\"On-premise VMs,\\\" \\\"Serverless\\\")\\n*   **Existing CI/CD Tools:** (e.g., \\\"GitLab CI,\\\" \\\"Jenkins,\\\" \\\"GitHub Actions,\\\" \\\"Azure DevOps\\\")\\n*   **Monitoring Tools:** (e.g., \\\"Prometheus/Grafana,\\\" \\\"Datadog,\\\" \\\"New Relic,\\\" \\\"ELK Stack\\\")\\n*   **Rollback Mechanism:** (e.g., \\\"Automated CI/CD rollback,\\\" \\\"Manual server revert,\\\" \\\"Database point-in-time recovery\\\")\\n*   **Team Size/Structure:** (e.g., \\\"Small dev team,\\\" \\\"Multiple cross-functional teams\\\")\\n\\n---\\n\\n### **Phase 0: Pre-Planning & Design**\\n\\n1.  **Define the Goal & Scope:**\\n    *   Clearly articulate what problem the code change solves and its expected outcome.\\n    *   Define \\\"Definition",
+    "status": "success",
+    "timestamp": "2026-06-29T22:27:49.748472",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:27:49.748472"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222749_751473",
+    "action_type": "api_call",
+    "tool_name": "self_dev_agent",
+    "action": "plan",
+    "parameters": {
+      "use_model": true,
+      "action": "plan",
+      "goal": "Suggest areas for further development and improvement"
+    },
+    "result": "{\n  \"goal\": \"Suggest areas for further development and improvement\",\n  \"checklist\": [\n    \"Create or switch to a codex/self-dev branch.\",\n    \"Inspect current git status and avoid overwriting unrelated user changes.\",\n    \"Make the smallest code change that addresses the goal.\",\n    \"Run focused tests first, then broader tests if the focused pass is clean.\",\n    \"Review git diff for security, filesystem, network, and regression risk.\",\n    \"Produce a merge report and wait for human merge approva",
+    "status": "success",
+    "timestamp": "2026-06-29T22:27:49.752472",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:27:49.751473"
+    },
+    "can_undo": false
+  },
+  {
+    "id": "20260629_222903_451254",
+    "action_type": "api_call",
+    "tool_name": "shutdown_jarvis",
+    "action": "shutdown_jarvis",
+    "parameters": {},
+    "result": "Done.",
+    "status": "success",
+    "timestamp": "2026-06-29T22:29:03.451254",
+    "undo_data": null,
+    "undo_plan": null,
+    "revision": {
+      "number": 1,
+      "parent_id": null,
+      "reason": "initial",
+      "created_at": "2026-06-29T22:29:03.451254"
+    },
+    "can_undo": false
   }
 ]

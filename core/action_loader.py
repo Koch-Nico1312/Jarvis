@@ -69,6 +69,9 @@ class ActionLoader:
             Action module or None if not found
         """
         metrics = get_metrics_collector()
+        if action_name.startswith("__"):
+            logger.debug("Ignoring internal action import name: %s", action_name)
+            return None
 
         if self.lazy_load:
             # Check cache first

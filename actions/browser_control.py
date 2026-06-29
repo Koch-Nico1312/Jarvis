@@ -287,6 +287,27 @@ _ALIASES: dict[str, str] = {
 }
 
 
+def _fallback_browsers(primary: str) -> list[str]:
+    primary = _ALIASES.get(primary.lower().strip(), primary.lower().strip())
+    if _OS == "Windows":
+        candidates = ["edge", "chrome", "brave", "vivaldi", "opera"]
+    elif _OS == "Darwin":
+        candidates = ["chrome", "edge", "safari", "brave", "firefox"]
+    else:
+        candidates = ["chrome", "edge", "brave", "vivaldi", "firefox"]
+    return [name for name in candidates if name != primary and _resolve_browser(name)]
+
+
+def _is_browser_launch_failure(error: Exception) -> bool:
+    text = str(error).lower()
+    return (
+        "launch_persistent_context" in text
+        or "failed to launch" in text
+        or "could not launch" in text
+        or "browser has been closed" in text
+    )
+
+
 def _resolve_browser(name: str) -> dict | None:
     name = _ALIASES.get(name.lower().strip(), name.lower().strip())
     os_map = _BROWSER_SPECS.get(_OS, {})
@@ -798,6 +819,18 @@ class _SessionRegistry:
         self._active_browser = browser_name
         return sess
 
+    def discard(self, browser_name: str) -> None:
+        browser_name = _ALIASES.get(browser_name.lower().strip(), browser_name.lower().strip())
+        with self._lock:
+            sess = self._sessions.pop(browser_name, None)
+            if self._active_browser == browser_name:
+                self._active_browser = ""
+        if sess:
+            try:
+                sess.close()
+            except Exception as e:
+                logger.debug(f"Error while discarding failed browser session {browser_name}: {e}")
+
     def switch(self, browser_name: str) -> str:
         browser_name = _ALIASES.get(browser_name.lower().strip(), browser_name.lower().strip())
         self._get_or_create(browser_name)
@@ -843,6 +876,51 @@ class _SessionRegistry:
 _registry = _SessionRegistry()
 
 
+def _run_browser_action(sess: _BrowserSession, action: str, params: dict, browser: str | None) -> str:
+    if action == "go_to":
+        return sess.run(sess.go_to(params.get("url", "")))
+    if action == "search":
+        return sess.run(sess.search(params.get("query", ""), params.get("engine", "google")))
+    if action == "click":
+        return sess.run(sess.click(params.get("selector"), params.get("text")))
+    if action == "type":
+        return sess.run(
+            sess.type_text(
+                params.get("selector"), params.get("text", ""), params.get("clear_first", True)
+            )
+        )
+    if action == "scroll":
+        return sess.run(sess.scroll(params.get("direction", "down"), int(params.get("amount", 500))))
+    if action == "fill_form":
+        return sess.run(sess.fill_form(params.get("fields", {})))
+    if action == "smart_click":
+        return sess.run(sess.smart_click(params.get("description", "")))
+    if action == "smart_type":
+        return sess.run(sess.smart_type(params.get("description", ""), params.get("text", "")))
+    if action == "get_text":
+        return sess.run(sess.get_text())
+    if action == "get_url":
+        return sess.run(sess.get_url())
+    if action == "press":
+        return sess.run(sess.press(params.get("key", "Enter")))
+    if action == "new_tab":
+        return sess.run(sess.new_tab(params.get("url", "")))
+    if action == "close_tab":
+        return sess.run(sess.close_tab())
+    if action == "screenshot":
+        return sess.run(sess.screenshot(params.get("path")))
+    if action == "back":
+        return sess.run(sess.back())
+    if action == "forward":
+        return sess.run(sess.forward())
+    if action == "reload":
+        return sess.run(sess.reload())
+    if action == "close":
+        target = browser or _registry._active_browser
+        return _registry.close_one(target) if target else "No browser specified."
+    return f"Unknown browser action: '{action}'"
+
+
 def browser_control(
     parameters: dict = None,
     response=None,
@@ -878,58 +956,30 @@ def browser_control(
         return result
 
     try:
-        if action == "go_to":
-            result = sess.run(sess.go_to(params.get("url", "")))
-        elif action == "search":
-            result = sess.run(sess.search(params.get("query", ""), params.get("engine", "google")))
-        elif action == "click":
-            result = sess.run(sess.click(params.get("selector"), params.get("text")))
-        elif action == "type":
-            result = sess.run(
-                sess.type_text(
-                    params.get("selector"), params.get("text", ""), params.get("clear_first", True)
-                )
-            )
-        elif action == "scroll":
-            result = sess.run(
-                sess.scroll(params.get("direction", "down"), int(params.get("amount", 500)))
-            )
-        elif action == "fill_form":
-            result = sess.run(sess.fill_form(params.get("fields", {})))
-        elif action == "smart_click":
-            result = sess.run(sess.smart_click(params.get("description", "")))
-        elif action == "smart_type":
-            result = sess.run(
-                sess.smart_type(params.get("description", ""), params.get("text", ""))
-            )
-        elif action == "get_text":
-            result = sess.run(sess.get_text())
-        elif action == "get_url":
-            result = sess.run(sess.get_url())
-        elif action == "press":
-            result = sess.run(sess.press(params.get("key", "Enter")))
-        elif action == "new_tab":
-            result = sess.run(sess.new_tab(params.get("url", "")))
-        elif action == "close_tab":
-            result = sess.run(sess.close_tab())
-        elif action == "screenshot":
-            result = sess.run(sess.screenshot(params.get("path")))
-        elif action == "back":
-            result = sess.run(sess.back())
-        elif action == "forward":
-            result = sess.run(sess.forward())
-        elif action == "reload":
-            result = sess.run(sess.reload())
-        elif action == "close":
-            target = browser or _registry._active_browser
-            result = _registry.close_one(target) if target else "No browser specified."
-        else:
-            result = f"Unknown browser action: '{action}'"
+        result = _run_browser_action(sess, action, params, browser)
 
     except concurrent.futures.TimeoutError:
         result = f"Browser action '{action}' timed out (60s)."
     except Exception as e:
-        result = f"Browser error ({action}): {e}"
+        attempted_browser = getattr(sess, "browser_name", browser or "")
+        if action != "close" and attempted_browser and _is_browser_launch_failure(e):
+            logger.warning(f"{attempted_browser} launch failed, trying browser fallbacks: {e}")
+            _registry.discard(attempted_browser)
+            fallback_errors: list[str] = []
+            for fallback in _fallback_browsers(attempted_browser):
+                try:
+                    fallback_sess = _registry.get(fallback)
+                    fallback_result = _run_browser_action(fallback_sess, action, params, fallback)
+                    result = f"{fallback} fallback: {fallback_result}"
+                    break
+                except Exception as fallback_error:
+                    _registry.discard(fallback)
+                    fallback_errors.append(f"{fallback}: {fallback_error}")
+            else:
+                detail = "; ".join(fallback_errors) if fallback_errors else "no fallback available"
+                result = f"Browser error ({action}): {e} | Fallbacks failed: {detail}"
+        else:
+            result = f"Browser error ({action}): {e}"
 
     _log(player, result)
     return result

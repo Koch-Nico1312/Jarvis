@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, startTransition } from "react";
+import { Component, useEffect, useRef, useState, startTransition } from "react";
+import type { ReactNode } from "react";
 import { Sparkles, Activity } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/AppSidebar";
@@ -23,6 +24,48 @@ const viewTitles: Record<string, string> = {
 };
 
 const DASHBOARD_REFRESH_MS = 2000;
+
+class ViewErrorBoundary extends Component<
+  { viewKey: string; children: ReactNode },
+  { error: Error | null; viewKey: string }
+> {
+  constructor(props: { viewKey: string; children: ReactNode }) {
+    super(props);
+    this.state = { error: null, viewKey: props.viewKey };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  static getDerivedStateFromProps(
+    props: { viewKey: string; children: ReactNode },
+    state: { error: Error | null; viewKey: string },
+  ) {
+    if (props.viewKey !== state.viewKey) {
+      return { error: null, viewKey: props.viewKey };
+    }
+    return null;
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex h-full items-center justify-center p-8 text-center">
+          <div className="max-w-xl rounded-2xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-50">
+            <div className="text-sm font-semibold text-rose-100">
+              Ansicht konnte nicht gerendert werden
+            </div>
+            <p className="mt-2 text-xs text-rose-100/75">
+              {this.state.error.message || "Unbekannter UI-Fehler"}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function roundResourceMetric(value: unknown) {
   return Math.round(Number(value ?? 0) * 10) / 10;
@@ -279,7 +322,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-                  <>
+                  <ViewErrorBoundary viewKey={activeView}>
                     {activeView === "home" && (
                       <HomeView dashboard={dashboard} onStartNewChat={handleStartNewChat} />
                     )}
@@ -306,7 +349,7 @@ export default function App() {
                     {activeView === "memory" && <MemoryView />}
                     {activeView === "resources" && <ResourcesView dashboard={dashboard} />}
                     {activeView === "studio" && <StudioView />}
-                  </>
+                  </ViewErrorBoundary>
                 )}
               </div>
             </main>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Bot,
   Mic,
-  MicOff,
   Send,
   Sparkles,
   MessageSquareText,
@@ -11,6 +10,7 @@ import {
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
+import { SpeakingFaceAvatar } from "./SpeakingFaceAvatar";
 import type { DashboardResponse, ChatMessage } from "../lib/types";
 
 export function VoiceChatView({
@@ -33,6 +33,8 @@ export function VoiceChatView({
   const currentLabel = state?.state ?? "LISTENING";
 
   const visibleMessages = messages.slice(-18);
+  const latestJarvisMessage =
+    [...messages].reverse().find((message) => message.role === "assistant")?.content ?? "";
 
   const handleSend = async () => {
     const text = input.trim();
@@ -125,35 +127,14 @@ export function VoiceChatView({
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-center">
-            <button
-              onClick={() => onToggleMute(!muted)}
-              className={`relative flex h-56 w-56 items-center justify-center rounded-full border ${
-                speaking
-                  ? "border-cyan-300/50 bg-cyan-400/15 shadow-[0_0_60px_rgba(34,211,238,0.25)]"
-                  : muted
-                  ? "border-rose-400/30 bg-rose-400/10"
-                  : "border-white/10 bg-white/5 shadow-[0_0_40px_rgba(255,255,255,0.08)]"
-              }`}
-            >
-              <div
-                className={`absolute inset-4 rounded-full border ${
-                  speaking ? "border-cyan-300/40" : "border-white/10"
-                }`}
-              />
-              <div
-                className={`absolute inset-8 rounded-full border ${
-                  speaking ? "border-cyan-300/20" : "border-white/10"
-                }`}
-              />
-              {speaking ? (
-                <Sparkles className="h-16 w-16 text-cyan-100" />
-              ) : muted ? (
-                <MicOff className="h-16 w-16 text-rose-200" />
-              ) : (
-                <Mic className="h-16 w-16 text-cyan-100" />
-              )}
-            </button>
+          <div className="mt-8">
+            <SpeakingFaceAvatar
+              speaking={speaking}
+              muted={muted}
+              status={currentLabel}
+              transcript={latestJarvisMessage}
+              onToggleMute={() => onToggleMute(!muted)}
+            />
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">

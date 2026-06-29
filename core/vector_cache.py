@@ -7,8 +7,9 @@ Caches ChromaDB query results to reduce redundant vector searches.
 import hashlib
 import json
 import threading
+from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from core.logger import get_logger
 from core.metrics_collector import get_metrics_collector
@@ -41,7 +42,7 @@ class VectorCache:
         self.ttl = timedelta(hours=ttl_hours)
         self.max_size = max_size
         self._redis_client = None
-        self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        self._memory_cache: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self._lock = threading.Lock()
         self._hits = 0
         self._misses = 0
@@ -126,6 +127,7 @@ class VectorCache:
 
                 # Check if entry is expired
                 if datetime.now() - entry["timestamp"] < self.ttl:
+                    self._memory_cache.move_to_end(key)
                     self._hits += 1
                     metrics.end_operation(
                         "vector_cache_get",
@@ -177,19 +179,18 @@ class VectorCache:
 
         # Use in-memory cache as fallback
         with self._lock:
-            # Evict oldest entries if cache is full
-            if len(self._memory_cache) >= self.max_size:
-                oldest_key = min(
-                    self._memory_cache.keys(), key=lambda k: self._memory_cache[k]["timestamp"]
-                )
-                del self._memory_cache[oldest_key]
-                logger.debug(f"Vector cache evicted oldest entry: {oldest_key[:16]}...")
+            if key in self._memory_cache:
+                del self._memory_cache[key]
 
             self._memory_cache[key] = {
                 "results": results,
                 "timestamp": datetime.now(),
                 "query_length": len(query),
             }
+
+            while len(self._memory_cache) > self.max_size:
+                evicted_key, _ = self._memory_cache.popitem(last=False)
+                logger.debug(f"Vector cache evicted LRU entry: {evicted_key[:16]}...")
 
         metrics.end_operation(
             "vector_cache_set",
@@ -282,5 +283,11 @@ def get_vector_cache() -> VectorCache:
     if _vector_cache is None:
         with _vector_cache_lock:
             if _vector_cache is None:
-                _vector_cache = VectorCache()
+                from config.config_loader import get_config
+
+                config = get_config()
+                _vector_cache = VectorCache(
+                    ttl_hours=int(config.get("performance.vector_cache_ttl_hours", 6)),
+                    max_size=int(config.get("performance.vector_cache_max_size", 5000)),
+                )
     return _vector_cache

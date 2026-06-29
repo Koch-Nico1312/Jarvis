@@ -40,3 +40,30 @@ def test_save_uploaded_files_analyzes_text_and_updates_payload(tmp_path, monkeyp
     assert result["files"][0]["name"] == "notes.txt"
     assert result["files"][0]["analysis"] == "First useful line"
     assert (tmp_path / "uploads" / "notes.txt").read_text(encoding="utf-8") == "First useful line\nSecond line"
+
+
+def test_devices_payload_uses_lazy_psutil_import(monkeypatch):
+    import ui_bridge
+
+    ui = make_ui_bridge()
+    monkeypatch.setattr(ui_bridge, "_psutil_module", None)
+
+    result = ui._devices_payload()
+
+    assert result["current"]["pid"]
+    assert result["current"]["metrics_available"] is True
+    assert result["items"][0]["status"] == "online"
+
+
+def test_devices_payload_falls_back_without_psutil(monkeypatch):
+    import ui_bridge
+
+    ui = make_ui_bridge()
+    monkeypatch.setattr(ui_bridge, "_get_psutil", lambda: None)
+
+    result = ui._devices_payload()
+
+    assert result["current"]["pid"]
+    assert result["current"]["process"] == "python"
+    assert result["current"]["metrics_available"] is False
+    assert result["items"][0]["status"] == "online"

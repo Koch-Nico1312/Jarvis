@@ -1,11 +1,213 @@
 {
   "current_session": {
-    "id": "20260625-215752-7844831d",
-    "title": "Voice session",
-    "started_at": "2026-06-25T21:57:52.049595",
-    "updated_at": "2026-06-25T21:57:52.049595",
+    "id": "20260629-222324-d34cc66e",
+    "title": "Hallo Javis.",
+    "started_at": "2026-06-29T22:23:24.710516",
+    "updated_at": "2026-06-29T22:29:03.449254",
     "ended_at": null,
-    "messages": [],
+    "messages": [
+      {
+        "id": "78c7708191d14d03b3fe280b3732f182",
+        "role": "user",
+        "content": "Hallo Javis.",
+        "timestamp": "2026-06-29T22:23:35.304648"
+      },
+      {
+        "id": "f7b6dd6eafc846b1be9171420c3f59e7",
+        "role": "assistant",
+        "content": "Hallo! Wie kann ich dir helfen?",
+        "timestamp": "2026-06-29T22:23:35.307649"
+      },
+      {
+        "id": "4525fc42726841b98bfe252923a47a06",
+        "role": "tool",
+        "content": "browser_control: Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:bla",
+        "timestamp": "2026-06-29T22:24:06.685085",
+        "tool": "browser_control",
+        "args_summary": "{'browser': 'firefox', 'action': 'go_to', 'url': 'https://www.youtube.com'}",
+        "result_summary": "Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:bla"
+      },
+      {
+        "id": "e3986ee4c1b14a06b098215018031c6b",
+        "role": "user",
+        "content": "Sta rte Fi re fo x und ö ffne YouTube.",
+        "timestamp": "2026-06-29T22:24:12.360960"
+      },
+      {
+        "id": "89b9ec621ce14e87b64b048734c1cdbf",
+        "role": "assistant",
+        "content": "Starte Firefox und öffne YouTube. Es gab einen Fehler beim Starten von Firefox. Ich kann YouTube leider nicht öffnen.",
+        "timestamp": "2026-06-29T22:24:12.362968"
+      },
+      {
+        "id": "e9f0e5d196994f33af1f3d61798a34fa",
+        "role": "tool",
+        "content": "browser_control: Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:bla",
+        "timestamp": "2026-06-29T22:24:35.483671",
+        "tool": "browser_control",
+        "args_summary": "{'action': 'go_to', 'url': 'https://www.youtube.com'}",
+        "result_summary": "Browser error (go_to): BrowserType.launch_persistent_context: Failed to launch the browser process.\nBrowser logs:\n\n<launching> C:\\Program Files\\Mozilla Firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Users\\kochn_lrehka5\\.jarvis_profiles\\firefox_jarvis -juggler-pipe about:bla"
+      },
+      {
+        "id": "57eba15583db4152b60818c25a890f8f",
+        "role": "user",
+        "content": "Ö ffne einfach so YouTube.",
+        "timestamp": "2026-06-29T22:24:41.566658"
+      },
+      {
+        "id": "89b076bc1b62475bb52d58eebb4853f6",
+        "role": "assistant",
+        "content": "Es scheint ein Problem mit dem Browser zu geben, ich kann YouTube im Moment nicht öffnen.",
+        "timestamp": "2026-06-29T22:24:41.568658"
+      },
+      {
+        "id": "062827ec2fab4893b7b654d03f6b8b51",
+        "role": "tool",
+        "content": "browser_control: Opened: https://www.youtube.com/",
+        "timestamp": "2026-06-29T22:24:57.317034",
+        "tool": "browser_control",
+        "args_summary": "{'browser': 'chrome', 'action': 'go_to', 'url': 'https://www.youtube.com'}",
+        "result_summary": "Opened: https://www.youtube.com/"
+      },
+      {
+        "id": "601cb0ddab4f4dc795019b3a575a0b55",
+        "role": "user",
+        "content": "Ö ff ne You Tube in Chrome.",
+        "timestamp": "2026-06-29T22:25:01.300223"
+      },
+      {
+        "id": "bf6b6f54cc764dfcacb6ee4000920188",
+        "role": "assistant",
+        "content": "Öffne YouTube in Chrome. YouTube wurde erfolgreich in Chrome geöffnet.",
+        "timestamp": "2026-06-29T22:25:01.301727"
+      },
+      {
+        "id": "c4fa10a29cb441a58ae96aebc5f9a4a7",
+        "role": "tool",
+        "content": "web_search: Here's a summary of key AI news from June 29, 2026:\n\n**1. EU Finalizes Simplified AI Regulations and Bans Non-Consensual Content Generation:**\nThe Council of the European Union has given its final approval to new regulations aimed at simplifying and streamlining existing AI rules, part of the 'Omnib",
+        "timestamp": "2026-06-29T22:25:28.365791",
+        "tool": "web_search",
+        "args_summary": "{'query': 'AI news 2026-06-29'}",
+        "result_summary": "Here's a summary of key AI news from June 29, 2026:\n\n**1. EU Finalizes Simplified AI Regulations and Bans Non-Consensual Content Generation:**\nThe Council of the European Union has given its final approval to new regulations aimed at simplifying and streamlining existing AI rules, part of the 'Omnib"
+      },
+      {
+        "id": "527339675d4a4022bcbcb2f71b0038ab",
+        "role": "user",
+        "content": "Su chen In ter net nach alle n New s , die am 2 9 . 06 . 2 0 2 6 he raus ge kommen sind.",
+        "timestamp": "2026-06-29T22:26:12.946024"
+      },
+      {
+        "id": "d9a0eececa334efd9423147c754d40e1",
+        "role": "assistant",
+        "content": "Suche nach KI-Neuigkeiten vom 29.06.2026. Hier ist eine Zusammenfassung der wichtigsten KI-Nachrichten vom 29. Juni 2026: 1. Die EU finalisiert vereinfachte KI-Vorschriften und verbietet die nicht einverständliche Inhaltserstellung. 2. Südkorea investiert über 1 Billion US-Dollar in KI. 3. ServiceNow und Accenture kooperieren für KI-gestütztes Risikomanagement. 4. Es wachsen Bedenken wegen \"AI Washing\" bei Unternehmensentlassungen. 5. Die US-GSA schlägt neue Datenschutzregeln für LLM-Auftragnehmer vor. 6. Generative KI zeigt Potenzial bei der Abwehr von Ransomware. 7. Eine Harvard Gazette-Studie beleuchtet die wachsende Besorgnis der Öffentlichkeit bezüglich der gesellschaftlichen Auswirkungen von KI.",
+        "timestamp": "2026-06-29T22:26:12.948023"
+      },
+      {
+        "id": "43e2741ea5d4496ea3f80971ffcb516d",
+        "role": "user",
+        "content": "Kan nst du mir die Que llen sa gen, al so die Plat t form en vo n de nen du die Ne uigkeiten hast.",
+        "timestamp": "2026-06-29T22:26:38.909197"
+      },
+      {
+        "id": "801588f203e0424ea51db51932aa8ad2",
+        "role": "assistant",
+        "content": "Die Zusammenfassung enthält keine direkten Links oder spezifische Plattformen. Die Nachrichten stammen aus Quellen wie dem Rat der Europäischen Union, Südkorea, ServiceNow und Accenture, der US-GSA und der Harvard Gazette, wie in der Zusammenfassung erwähnt.",
+        "timestamp": "2026-06-29T22:26:38.910199"
+      },
+      {
+        "id": "85f604e9d89848d8a4b8873e38432004",
+        "role": "user",
+        "content": "Okay , co ol . Äh m was kan nst du noch alle s machen?",
+        "timestamp": "2026-06-29T22:26:46.143256"
+      },
+      {
+        "id": "6ae87cb57d6042598c40071f3fadb475",
+        "role": "user",
+        "content": "er stel len mir auf mein em De sktop eine Pu nkt T X T Datei.",
+        "timestamp": "2026-06-29T22:26:52.324334"
+      },
+      {
+        "id": "fb33f6bd3e7548eba36456e3a4326c7b",
+        "role": "tool",
+        "content": "file_controller: File created: allgemein.txt",
+        "timestamp": "2026-06-29T22:26:59.821995",
+        "tool": "file_controller",
+        "args_summary": "{'name': 'allgemein.txt', 'action': 'create_file', 'content': 'hallo', 'path': 'desktop'}",
+        "result_summary": "File created: allgemein.txt"
+      },
+      {
+        "id": "00af10603c044ee9966cc7b47a797577",
+        "role": "user",
+        "content": "na men s all ge mein und schre ibe darin hallo.",
+        "timestamp": "2026-06-29T22:27:09.257680"
+      },
+      {
+        "id": "2c8ac35f4b124104b9429c801801f5fd",
+        "role": "assistant",
+        "content": "Ich kann unter anderem Dateien erstellen. Erstelle die Datei \"allgemein.txt\" auf deinem Desktop mit dem Inhalt \"hallo\". Datei \"allgemein.txt\" wurde erfolgreich auf deinem Desktop erstellt.",
+        "timestamp": "2026-06-29T22:27:09.259676"
+      },
+      {
+        "id": "25d7b58cba2f41b59b0e796c05fd1abd",
+        "role": "user",
+        "content": "Cool .",
+        "timestamp": "2026-06-29T22:27:18.984855"
+      },
+      {
+        "id": "17c98e4f93734d88bacf165b0e5233f6",
+        "role": "assistant",
+        "content": "Gern geschehen! Was kann ich noch für dich tun?",
+        "timestamp": "2026-06-29T22:27:18.987328"
+      },
+      {
+        "id": "b5efe3500f8a4f06bcb9101cc003f15e",
+        "role": "tool",
+        "content": "self_dev_agent: {\n  \"goal\": \"Suggest areas for further development and improvement\",\n  \"checklist\": [\n    \"Create or switch to a codex/self-dev branch.\",\n    \"Inspect current git status and avoid overwriting unrelated user changes.\",\n    \"Make the smallest code change that addresses the goal.\",\n    \"Run focused tes",
+        "timestamp": "2026-06-29T22:27:49.750472",
+        "tool": "self_dev_agent",
+        "args_summary": "{'use_model': True, 'action': 'plan', 'goal': 'Suggest areas for further development and improvement'}",
+        "result_summary": "{\n  \"goal\": \"Suggest areas for further development and improvement\",\n  \"checklist\": [\n    \"Create or switch to a codex/self-dev branch.\",\n    \"Inspect current git status and avoid overwriting unrelated user changes.\",\n    \"Make the smallest code change that addresses the goal.\",\n    \"Run focused tes"
+      },
+      {
+        "id": "119eaa995d3a41bd8b75065c19525fad",
+        "role": "user",
+        "content": "Was könnte ich an dir noch weiterentwickeln?",
+        "timestamp": "2026-06-29T22:28:22.599558"
+      },
+      {
+        "id": "d47ec2b7dd6a44e2af10342f12ff4b7c",
+        "role": "assistant",
+        "content": "Das Tool hat einen umfassenden Plan für sichere Codeänderungen und Bereiche für Weiterentwicklung erstellt. Kurz gesagt, Verbesserungspotenzial besteht in der Erweiterung der Automatisierung (Infrastructure as Code, Tests, automatisiertes Rollback), fortgeschrittenen Deployment-Strategien, robuster Beobachtbarkeit (Distributed Trントリー, Logging, APM), Chaos Engineering, tieferer Sicherheitsintegration (Shift-Left), exzellentem Incident Response und Wissensmanagement sowie der Verbesserung der Developer Experience.",
+        "timestamp": "2026-06-29T22:28:22.602068"
+      },
+      {
+        "id": "5b93f73c344448fea97a282e3555b8b0",
+        "role": "user",
+        "content": "Okay .",
+        "timestamp": "2026-06-29T22:28:29.506846"
+      },
+      {
+        "id": "a57c964a6d9b40308a238072929903d6",
+        "role": "user",
+        "content": "Kan nst du mir er klä ren bit te , wie AI funktioniert?",
+        "timestamp": "2026-06-29T22:28:57.242819"
+      },
+      {
+        "id": "e7d41fe7dc9849cb996399195f32fbf4",
+        "role": "assistant",
+        "content": "Künstliche Intelligenz (KI) funktioniert im Grunde genommen, indem sie versucht, menschliches Lernen und Entscheidungsfindung zu simulieren. Das geschieht durch verschiedene Methoden wie maschinelles Lernen, bei dem Algorithmen aus Daten lernen, und neuronale Netze, die dem menschlichen Gehirn nachempfunden sind. KI kann damit Dinge wie Mustererkennung, Sprachverarbeitung und sogar Vorhersagen leisten.",
+        "timestamp": "2026-06-29T22:28:57.244820"
+      },
+      {
+        "id": "64f5f7e9c1124a2c8ffc1e2296cb7c1d",
+        "role": "tool",
+        "content": "shutdown_jarvis: Done.",
+        "timestamp": "2026-06-29T22:29:03.449254",
+        "tool": "shutdown_jarvis",
+        "args_summary": "{}",
+        "result_summary": "Done."
+      }
+    ],
     "tool_results": [],
     "activity": [],
     "open_ends": [],
@@ -14,6 +216,90 @@
     "status": "active"
   },
   "sessions": [
+    {
+      "id": "20260629-215117-aeec4446",
+      "title": "Hallo Javas.",
+      "started_at": "2026-06-29T21:51:17.113219",
+      "updated_at": "2026-06-29T22:23:24.688955",
+      "ended_at": "2026-06-29T22:23:24.688955",
+      "messages": [
+        {
+          "id": "447421c6a79a4387a366b8607ef2f8cb",
+          "role": "user",
+          "content": "Hallo Javas.",
+          "timestamp": "2026-06-29T21:51:25.265693"
+        },
+        {
+          "id": "b3803e635e8a4df8beecd9232c842b5e",
+          "role": "assistant",
+          "content": "Hallo! Wie kann ich dir heute helfen?",
+          "timestamp": "2026-06-29T21:51:25.269805"
+        },
+        {
+          "id": "100cbdec9a6746c7a2d3c1a10b6b00c6",
+          "role": "user",
+          "content": "Öffne Firefox.",
+          "timestamp": "2026-06-29T21:51:41.280995"
+        },
+        {
+          "id": "0f454eba38624ba6addad565900085b8",
+          "role": "assistant",
+          "content": "Ich konnte Firefox nicht öffnen, da dies eine bestätigungspflichtige mittelriskante Aktion ist. Gibt es etwas anderes, wobei ich dir helfen kann?",
+          "timestamp": "2026-06-29T21:51:41.282499"
+        },
+        {
+          "id": "e43e91b7c4da494e99f2cb539ac6fd9b",
+          "role": "user",
+          "content": "Was kan nst du alles machen.",
+          "timestamp": "2026-06-29T21:52:01.317249"
+        },
+        {
+          "id": "cf5468fe25a94198bbe7d90d7b3953f9",
+          "role": "assistant",
+          "content": "Ich kann viele Dinge tun, Jarvis. Zum Beispiel Dateien verwalten, deinen Computer steuern, Termine und E-Mails organisieren, bei der Softwareentwicklung helfen und im Web suchen. Gibt es etwas Bestimmtes, das du erledigen möchtest?",
+          "timestamp": "2026-06-29T21:52:01.319246"
+        },
+        {
+          "id": "eff9b1ce128a4caf903d9cb8b398372a",
+          "role": "user",
+          "content": "Su che mir den neu esten AI In fo s von gestern raus.",
+          "timestamp": "2026-06-29T21:52:09.263753"
+        }
+      ],
+      "tool_results": [],
+      "activity": [],
+      "open_ends": [],
+      "recent_files": [],
+      "summary": "Hallo Javas.",
+      "status": "completed"
+    },
+    {
+      "id": "20260629-214813-a38cc869",
+      "title": "Hallo Javis.",
+      "started_at": "2026-06-29T21:48:13.371840",
+      "updated_at": "2026-06-29T21:51:17.078644",
+      "ended_at": "2026-06-29T21:51:17.078644",
+      "messages": [
+        {
+          "id": "b83243109f594800aff24028912e9c38",
+          "role": "user",
+          "content": "Hallo Javis.",
+          "timestamp": "2026-06-29T21:48:23.957882"
+        },
+        {
+          "id": "03f16d9702444ad08caf83ec579b4acf",
+          "role": "assistant",
+          "content": "Hallo! Wie kann ich dir heute helfen?",
+          "timestamp": "2026-06-29T21:48:23.961392"
+        }
+      ],
+      "tool_results": [],
+      "activity": [],
+      "open_ends": [],
+      "recent_files": [],
+      "summary": "Hallo Javis.",
+      "status": "completed"
+    },
     {
       "id": "20260624-211830-a388167f",
       "title": "O ha !",
@@ -423,5 +709,5 @@
       "status": "completed"
     }
   ],
-  "updated_at": "2026-06-25T21:57:52.049595"
+  "updated_at": "2026-06-29T22:29:03.449254"
 }

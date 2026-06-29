@@ -252,5 +252,16 @@ def get_memory_manager() -> MemoryManager:
     if _memory_manager is None:
         with _memory_manager_lock:
             if _memory_manager is None:
-                _memory_manager = MemoryManager()
+                from config.config_loader import get_config
+
+                config = get_config()
+                _memory_manager = MemoryManager(
+                    max_memory_mb=int(config.get("system.max_memory_mb", 512)),
+                    gc_interval_seconds=int(
+                        config.get("performance.memory_gc_interval_seconds", 60)
+                    ),
+                )
+                _memory_manager._max_cache_size = int(
+                    config.get("performance.memory_cache_max_size", 5000)
+                )
     return _memory_manager

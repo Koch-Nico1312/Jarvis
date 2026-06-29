@@ -16,6 +16,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from config.config_loader import get_config
 from core.action_history import get_action_history
 from core.approval_flow import get_approval_flow
 from core.background_task_manager import get_background_task_manager
@@ -579,8 +580,15 @@ class WorkflowEngine:
         step.started_at = datetime.now()
 
         try:
-            # Check approval if required
-            if step.requires_confirmation or step.risk_level == "high":
+            config = get_config()
+            require_high_risk_confirmation = bool(
+                config.get("workflow.require_confirmation_high_risk", True)
+            )
+
+            # Check approval if required by the step or workflow policy.
+            if step.requires_confirmation or (
+                step.risk_level == "high" and require_high_risk_confirmation
+            ):
                 is_allowed, message = self.approval_flow.check_and_request_approval(
                     tool_name=step.action, action=step.name, parameters=step.parameters
                 )
@@ -594,7 +602,9 @@ class WorkflowEngine:
 
             # Check permission
             is_allowed, message = check_action(
-                profile="normal", action=step.action, parameters=step.parameters
+                profile=config.get("security.permission_profile", "normal"),
+                action=step.action,
+                parameters=step.parameters,
             )
 
             if not is_allowed:

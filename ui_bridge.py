@@ -40,16 +40,33 @@ try:
     from PyQt6.QtWidgets import QApplication, QMainWindow
 
     QT_WEBENGINE_AVAILABLE = True
-except Exception:
+    QT_WEBENGINE_IMPORT_ERROR: Exception | None = None
+except Exception as exc:
     QUrl = None  # type: ignore[assignment]
     QColor = None  # type: ignore[assignment]
     QApplication = None  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
     QWebEngineView = None  # type: ignore[assignment]
     QT_WEBENGINE_AVAILABLE = False
+    QT_WEBENGINE_IMPORT_ERROR = exc
 
 
 logger = get_logger(__name__)
+
+
+_psutil_module: Any | bool | None = None
+
+
+def _get_psutil():
+    """Import psutil only when runtime/device metrics are requested."""
+    global _psutil_module
+    if _psutil_module is None:
+        try:
+            import psutil as psutil_module
+        except ImportError:
+            psutil_module = False
+        _psutil_module = psutil_module
+    return _psutil_module if _psutil_module is not False else None
 
 
 BASE_DIR = resolve_project_root()
@@ -58,6 +75,29 @@ UI_DIST_DIR = UI_DIR / "dist"
 VITE_BIN = UI_DIR / "node_modules" / "vite" / "bin" / "vite.js"
 UPLOAD_DIR = project_path("data", "uploads")
 DOCUMENT_INDEX_PATH = project_path("data", "ui_documents.json")
+
+
+def get_qt_webengine_diagnostic() -> str:
+    """Return a concise status message for the desktop WebEngine runtime."""
+    if QT_WEBENGINE_AVAILABLE:
+        return "Qt WebEngine is available."
+    if QT_WEBENGINE_IMPORT_ERROR is None:
+        return "Qt WebEngine is not available."
+    return (
+        "Qt WebEngine is not available "
+        f"({type(QT_WEBENGINE_IMPORT_ERROR).__name__}: {QT_WEBENGINE_IMPORT_ERROR})."
+    )
+
+
+def get_qt_webengine_recovery_hint() -> str:
+    if os.environ.get("JARVIS_NO_QT"):
+        return "Unset JARVIS_NO_QT to enable the desktop Qt window."
+    return (
+        "Install the GUI dependency in the active virtual environment with "
+        "`python -m pip install -r requirements.txt` or "
+        "`python -m pip install PyQt6-WebEngine==6.11.0`. "
+        "For a browser-only UI, set JARVIS_ALLOW_BROWSER_FALLBACK=1 before starting JARVIS."
+    )
 
 
 class _MultipartUpload:
@@ -257,9 +297,10 @@ class JarvisUI:
             )
         else:
             logger.error(
-                "Qt WebEngine is not available, so JARVIS cannot open the desktop window. "
-                "Install PyQt6-WebEngine or unset JARVIS_NO_QT. The system browser will not "
-                "be opened automatically because voice mode depends on the local desktop runtime."
+                "%s JARVIS cannot open the desktop window. %s The system browser will not "
+                "be opened automatically because voice mode depends on the local desktop runtime.",
+                get_qt_webengine_diagnostic(),
+                get_qt_webengine_recovery_hint(),
             )
         try:
             while not self._shutdown_event.wait(0.25):
@@ -358,10 +399,9 @@ class JarvisUI:
         return current_state_dict
 
     def _resource_snapshot(self) -> Dict[str, Any]:
-        try:
-            import psutil
-        except ImportError as exc:
-            return {"error": f"psutil is not available: {exc}"}
+        psutil = _get_psutil()
+        if psutil is None:
+            return {"error": "psutil is not available"}
 
         cpu = psutil.cpu_percent(interval=None)
         memory = psutil.virtual_memory()
@@ -650,6 +690,30 @@ class JarvisUI:
         }
 
     def _devices_payload(self) -> Dict[str, Any]:
+        psutil = _get_psutil()
+        if psutil is None:
+            return {
+                "current": {
+                    "id": platform.node() or "local",
+                    "name": platform.node() or "Local device",
+                    "os": platform.platform(),
+                    "python": platform.python_version(),
+                    "pid": os.getpid(),
+                    "process": "python",
+                    "started_at": None,
+                    "metrics_available": False,
+                },
+                "items": [
+                    {
+                        "id": platform.node() or "local",
+                        "name": platform.node() or "Local device",
+                        "status": "online",
+                        "kind": "desktop",
+                        "last_seen": datetime.now().isoformat(),
+                    }
+                ],
+            }
+
         proc = psutil.Process()
         return {
             "current": {
@@ -660,6 +724,7 @@ class JarvisUI:
                 "pid": os.getpid(),
                 "process": proc.name(),
                 "started_at": datetime.fromtimestamp(proc.create_time()).isoformat(),
+                "metrics_available": True,
             },
             "items": [
                 {

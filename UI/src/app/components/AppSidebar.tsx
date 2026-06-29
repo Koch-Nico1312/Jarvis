@@ -29,6 +29,8 @@ import {
 } from "./ui/sidebar";
 import { Calendar as CalendarComponent } from "./ui/calendar";
 import { useState } from "react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import { EventModal } from "./EventModal";
 import { SettingsModal } from "./SettingsModal";
 import type { DashboardResponse } from "../lib/types";
@@ -221,13 +223,45 @@ export function AppSidebar({
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+                <div className="mb-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100">
+                  {date
+                    ? format(date, "EEEE, d. MMMM yyyy", { locale: de })
+                    : "Kein Datum ausgewählt"}
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-2">
                   <CalendarComponent
                     mode="single"
                     selected={date}
                     onSelect={handleDateSelect}
                     weekStartsOn={1}
-                    className="rounded-xl bg-transparent text-slate-100 [&_.rdp-day_button]:text-slate-200 [&_.rdp-day_button:hover]:bg-white/10 [&_.rdp-day_button.rdp-day_selected]:bg-cyan-400/20 [&_.rdp-day_button.rdp-day_selected]:text-cyan-100"
+                    className="w-full rounded-xl bg-transparent p-1 text-slate-100"
+                    classNames={{
+                      months: "flex w-full flex-col",
+                      month: "flex w-full flex-col gap-2",
+                      caption:
+                        "relative flex w-full items-center justify-center px-8 py-1 text-center",
+                      caption_label: "truncate text-xs font-medium text-slate-100",
+                      nav: "absolute inset-x-0 top-1 flex items-center justify-between px-1",
+                      nav_button:
+                        "flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 p-0 text-slate-300 hover:bg-white/10 hover:text-white",
+                      nav_button_previous: "",
+                      nav_button_next: "",
+                      table: "w-full table-fixed border-collapse",
+                      head_row: "grid grid-cols-7",
+                      head_cell:
+                        "flex h-7 items-center justify-center text-[10px] font-normal text-slate-500",
+                      row: "mt-1 grid grid-cols-7",
+                      cell: "flex h-8 items-center justify-center p-0 text-center",
+                      day:
+                        "flex h-7 w-7 items-center justify-center rounded-lg p-0 text-xs font-normal text-slate-200 hover:bg-white/10",
+                      day_selected:
+                        "bg-cyan-400/25 text-cyan-50 hover:bg-cyan-400/30",
+                      day_today: "border border-cyan-300/40 text-cyan-100",
+                      day_outside: "text-slate-600 opacity-60",
+                      day_disabled: "text-slate-600 opacity-40",
+                      day_hidden: "invisible",
+                    }}
                   />
                 </div>
               </SidebarGroupContent>
