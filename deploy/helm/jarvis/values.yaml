@@ -1,0 +1,73 @@
+replicaCount: 1
+
+image:
+  repository: jarvis
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClassName: ""
+
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONUTF8: "1"
+  JARVIS_PLATFORM_STORE: "auto"
+  JARVIS_STORAGE_BACKEND: "local+s3"
+  JARVIS_S3_BUCKET: "jarvis-artifacts"
+
+secrets:
+  existingSecret: ""
+  requiredKeys:
+    - JARVIS_AGENT_TOKEN
+    - JARVIS_MCP_TOKEN
+
+ingress:
+  enabled: false
+  className: ""
+  host: jarvis.local
+  tlsSecretName: ""
+
+postgres:
+  enabled: false
+  url: ""
+
+redis:
+  enabled: false
+  url: ""
+
+s3:
+  endpoint: ""
+  bucket: jarvis-artifacts
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

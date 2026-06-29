@@ -1,0 +1,81 @@
+body {
+  margin: 0;
+  width: 340px;
+  background: #06131c;
+  color: #e5edf5;
+  font: 13px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+#status {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #9fb4c7;
+  padding: 2px 8px;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+
+.row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+}
+
+#session {
+  color: #9fb4c7;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+textarea,
+input {
+  background: #0a1d2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: inherit;
+  min-width: 0;
+  resize: vertical;
+  padding: 8px;
+}
+
+button {
+  background: #39b7a5;
+  border: 0;
+  border-radius: 8px;
+  color: #03111a;
+  cursor: pointer;
+  font-weight: 700;
+  height: 34px;
+}
+
+pre {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: #c9d8e6;
+  margin: 0;
+  max-height: 170px;
+  overflow: auto;
+  padding: 8px;
+  white-space: pre-wrap;
+}

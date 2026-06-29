@@ -59,8 +59,8 @@ RUN groupadd -r jarvis && useradd -r -g jarvis jarvis
 COPY --chown=jarvis:jarvis . .
 
 # Create necessary directories
-RUN mkdir -p data/cache data/vector_db data/vision_memory logs config && \
-    chown -R jarvis:jarvis data logs config
+RUN mkdir -p data/cache data/vector_db data/vision_memory data/published data/ingestion data/sandbox_artifacts logs config plugins/community && \
+    chown -R jarvis:jarvis data logs config plugins
 
 # Switch to non-root user
 USER jarvis

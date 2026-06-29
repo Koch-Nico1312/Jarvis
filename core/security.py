@@ -185,6 +185,57 @@ class APIKeyManager:
 
             logger.info(f"API key deleted for service: {service}")
 
+    def rotate_key(self, service: str, new_key_value: str) -> str:
+        """
+        Rotate an API key by replacing the old key with a new one.
+        
+        Args:
+            service: Service name
+            new_key_value: The new API key value
+            
+        Returns:
+            The old key value (for rollback if needed)
+        """
+        old_key = self.get_key(service)
+        if not old_key:
+            raise ValueError(f"No existing key found for service: {service}")
+        
+        # Store new key
+        self.store_key(service, new_key_value)
+        
+        logger.info(f"API key rotated for service: {service}")
+        return old_key
+    
+    def check_key_rotation_needed(self, service: str, max_age_days: int = 90) -> bool:
+        """
+        Check if an API key needs rotation based on age.
+        
+        Args:
+            service: Service name
+            max_age_days: Maximum age in days before rotation is needed
+            
+        Returns:
+            True if rotation is needed, False otherwise
+        """
+        if not self.keys_file.exists():
+            return False
+        
+        with open(self.keys_file, "r", encoding="utf-8") as f:
+            keys_data = json.load(f)
+        
+        if service not in keys_data:
+            return False
+        
+        stored_at = keys_data[service].get("stored_at")
+        if not stored_at:
+            return True  # No timestamp, assume rotation needed
+        
+        try:
+            key_age = datetime.now() - datetime.fromisoformat(stored_at)
+            return key_age.days >= max_age_days
+        except (ValueError, TypeError):
+            return True  # Invalid timestamp, assume rotation needed
+
 
 class InputValidator:
     """

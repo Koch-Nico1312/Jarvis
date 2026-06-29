@@ -9,6 +9,7 @@ import type {
   DevicesPayload,
   PermissionsPayload,
   ReliabilityPayload,
+  PlatformPayload,
   ResumePayload,
   SessionPayload,
   SetupPayload,
@@ -75,6 +76,33 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
     console.warn("Upload failed:", error);
     throw error;
   }
+}
+
+async function strictRequestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+    ...init,
+  });
+
+  const text = await response.text();
+  let body: any = {};
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = { raw: text };
+    }
+  }
+
+  if (!response.ok) {
+    const message = body?.error || body?.message || `Request failed: ${response.status}`;
+    throw new Error(message);
+  }
+
+  return body as T;
 }
 
 function getMockData<T>(path: string): T {
@@ -219,7 +247,12 @@ function getMockData<T>(path: string): T {
       pending: [],
     },
     permissions: {
-      tools: [],
+      tools: [
+        { id: "tool-custom-summarize", name: "summarize_text", kind: "function", status: "draft", code: "return parameters.get('text', '')[:500]", test_parameters: { text: "Jarvis Studio" }, test_result: "Not run" },
+        { id: "filter-nonempty-text", name: "nonempty_text", kind: "filter", status: "ready", code: "return bool(parameters.get('text', '').strip())", test_parameters: { text: "Jarvis" }, test_result: "Filter ready" },
+        { id: "pipe-normalize-text", name: "normalize_text", kind: "pipe", status: "ready", code: "return parameters.get('text', '').strip().lower()", test_parameters: { text: "  Jarvis Studio  " }, test_result: "Pipe ready" },
+        { id: "action-create-note", name: "create_note_action", kind: "action", status: "ready", code: "return {'artifact_title': parameters.get('title', 'Tool Note')}", test_parameters: { title: "Tool Note" }, test_result: "Action ready" },
+      ],
       disabled_actions: [],
     },
     reliability: {
@@ -269,6 +302,389 @@ function getMockData<T>(path: string): T {
   if (path === "/api/devices") {
     return mockDashboard.devices as T;
   }
+  if (path === "/api/platform") {
+    return {
+      solo: {
+        enabled: true,
+        owner_user: "u-admin",
+        workspace_name: "Personal Jarvis",
+        local_only: true,
+        status: "ready",
+        updated_at: new Date().toISOString(),
+      },
+      solo_status: {
+        enabled: true,
+        owner_user: "u-admin",
+        workspace_name: "Personal Jarvis",
+        local_only: true,
+        status: "ready",
+        ready_count: 18,
+        total_count: 20,
+        optional_count: 2,
+        blocking_count: 0,
+        updated_at: new Date().toISOString(),
+        checklist: [
+          { id: "agent_builder", label: "Agent/Persona Builder", status: "ready" },
+          { id: "solo_access", label: "Single-User Rollen/RBAC", status: "ready" },
+          { id: "marketplace", label: "Lokale Erweiterungen", status: "optional" },
+          { id: "openapi_import", label: "OpenAPI Tool Import", status: "ready" },
+          { id: "mcp_deferred", label: "MCP Deferred Discovery", status: "ready" },
+          { id: "tool_editor", label: "Tool/Function Editor", status: "ready" },
+          { id: "workflow_builder", label: "Canvas Workflow Builder", status: "ready" },
+          { id: "workflow_debugger", label: "Workflow Replay/Debugger", status: "ready" },
+          { id: "evaluations", label: "Evaluations/Model Arena", status: "ready" },
+          { id: "metrics", label: "Token/Kosten/Latenz", status: "ready" },
+          { id: "knowledge_sync", label: "Knowledge Sync", status: "ready" },
+          { id: "hybrid_rag", label: "Hybrid RAG + Reranking", status: "ready" },
+          { id: "document_extraction", label: "Dokument-Extraktion", status: "ready" },
+          { id: "artifacts", label: "Notes/Artifacts Workspace", status: "ready" },
+          { id: "sandbox", label: "Code Interpreter Sandbox", status: "ready" },
+          { id: "publishing", label: "Web/App/API/MCP Publishing", status: "ready" },
+          { id: "deployment", label: "Lokales Deployment", status: "ready" },
+          { id: "identity", label: "SSO/OIDC/LDAP/SCIM optional", status: "optional" },
+          { id: "agent_chains", label: "Agent Chains/Subagents", status: "ready" },
+          { id: "companion", label: "Mobile/Browser Companion", status: "ready" },
+        ],
+      },
+      users: [
+        { id: "u-admin", name: "You", email: "you@jarvis.local", roles: ["owner"], groups: ["personal"] },
+      ],
+      groups: [{ id: "personal", name: "Personal Workspace", members: ["u-admin"] }],
+      roles: [{ id: "owner", permissions: ["*"] }],
+      acls: [],
+      audit_events: [],
+      agents: [
+        {
+          id: "research-copilot",
+          name: "Research Copilot",
+          model: "fast",
+          prompt: "You research, cite sources, and summarize compactly.",
+          tools: ["web_search", "documents_search"],
+          knowledge: ["local-documents"],
+          parameters: { temperature: 0.3, max_tokens: 1800 },
+          version: "1.0.0",
+          visibility: "private",
+          owner: "u-admin",
+        },
+      ],
+      agent_packages: [],
+      marketplace: [
+        {
+          id: "github-sync",
+          name: "GitHub Knowledge Sync",
+          kind: "connector",
+          installed: false,
+          enabled: false,
+          version: "1.0.0",
+          latest_version: "1.1.0",
+          trust: "community",
+          review_status: "pending",
+          checksum: "sha256:community-github-sync",
+          signature: "unsigned",
+          verification: {
+            status: "failed",
+            checks: [
+              { name: "checksum", status: "passed", detail: "sha256:community-github-sync" },
+              { name: "signature", status: "failed", detail: "unsigned" },
+              { name: "review", status: "failed", detail: "pending" },
+            ],
+          },
+          source_url: "https://plugins.jarvis.local/github-sync",
+          description: "Keeps repositories indexed for RAG.",
+          entrypoint: "github_sync",
+        },
+      ],
+      tools: [
+        { id: "tool-custom-summarize", name: "summarize_text", kind: "function", status: "draft", code: "return parameters.get('text', '')[:500]", test_parameters: { text: "Jarvis Studio" }, test_result: "Not run" },
+        { id: "filter-nonempty-text", name: "nonempty_text", kind: "filter", status: "ready", code: "return bool(parameters.get('text', '').strip())", test_parameters: { text: "Jarvis" }, test_result: "Filter ready" },
+        { id: "pipe-normalize-text", name: "normalize_text", kind: "pipe", status: "ready", code: "return parameters.get('text', '').strip().lower()", test_parameters: { text: "  Jarvis Studio  " }, test_result: "Pipe ready" },
+        { id: "action-create-note", name: "create_note_action", kind: "action", status: "ready", code: "return {'artifact_title': parameters.get('title', 'Tool Note')}", test_parameters: { title: "Tool Note" }, test_result: "Action ready" },
+      ],
+      mcp: { deferred: true, last_query: "", tools: [], loaded_tools: [], servers: [] },
+      tool_executions: [],
+      workflows: [
+        {
+          id: "wf-triage",
+          name: "Document Triage",
+          nodes: [
+            { id: "input", type: "input", label: "Upload", x: 6, y: 42 },
+            { id: "extract", type: "extract", label: "Extract", x: 26, y: 42 },
+            { id: "route", type: "branch", label: "Needs Review?", x: 46, y: 42 },
+            { id: "human", type: "human", label: "Approval", x: 66, y: 20 },
+            { id: "loop", type: "loop", label: "Retry Extract", x: 66, y: 64 },
+            { id: "publish", type: "publish", label: "Report", x: 84, y: 42 },
+          ],
+          edges: [["input", "extract"], ["extract", "route"], ["route", "human", "low confidence"], ["route", "publish", "ready"], ["route", "loop", "retry"], ["loop", "extract"], ["human", "publish"]],
+          canvas: { zoom: 1, supports: ["branching", "human-in-the-loop", "loops", "routing"] },
+          version: 2,
+          versions: [
+            {
+              version: 2,
+              created_at: new Date().toISOString(),
+              reason: "mock-edit",
+              nodes: [],
+              edges: [["input", "extract"]],
+              canvas: { zoom: 1 },
+            },
+          ],
+          status: "draft",
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      runs: [
+        {
+          id: "run-demo",
+          workflow_id: "wf-triage",
+          status: "waiting_for_human",
+          started_at: new Date().toISOString(),
+          steps: [
+            { node: "input", node_type: "input", status: "completed", input: "state[0]", output: "Upload ok", latency_ms: 18, retries: 0, tool_calls: [] },
+            { node: "route", node_type: "branch", status: "completed", input: "state[2]", output: "Needs Review? ok", latency_ms: 21, retries: 0, tool_calls: ["branch"], route_labels: ["low confidence", "ready", "retry"], branch_taken: "human" },
+            { node: "human", node_type: "human", status: "waiting_for_human", input: "state[3]", output: "Approval ok", latency_ms: 12, retries: 0, tool_calls: [], human_required: true },
+            { node: "loop", node_type: "loop", status: "completed", input: "state[4]", output: "Retry Extract ok", latency_ms: 16, retries: 1, tool_calls: ["loop"], loop_iteration: 1, retry_log: ["retry 1 succeeded"] },
+          ],
+        },
+      ],
+      evaluations: [
+        {
+          id: "eval-support",
+          name: "Support Prompt Arena",
+          agents: ["research-copilot", "research-copilot-v2"],
+          dataset: "golden-support-20",
+          status: "passing",
+          elo: { "research-copilot": 1240, "research-copilot-v2": 1216 },
+          regressions: 0,
+          last_score: 0.92,
+          baseline: "research-copilot",
+          challenger: "research-copilot-v2",
+          regression_gate: { min_score: 0.8, max_regressions: 0 },
+        },
+      ],
+      evaluation_datasets: [
+        { id: "golden-support-20", name: "Golden Support 20", cases: [{ id: "case-1", input: "Summarize refund policy", expected: "Clear refund summary", rubric: "groundedness" }] },
+      ],
+      evaluation_runs: [
+        {
+          id: "eval-run-demo",
+          evaluation_id: "eval-support",
+          dataset: "golden-support-20",
+          status: "passing",
+          score: 0.92,
+          regressions: 0,
+          winner: "research-copilot",
+          baseline: "research-copilot",
+          challenger: "research-copilot-v2",
+          elo_delta: { "research-copilot": 8, "research-copilot-v2": -3 },
+          gate: { status: "passed", min_score: 0.8, max_regressions: 0 },
+          pairs: [{ case_id: "case-1", baseline: "research-copilot", challenger: "research-copilot-v2", winner: "research-copilot", loser: "research-copilot-v2", margin: 0.02 }],
+          created_at: new Date().toISOString(),
+          cases: [{ case_id: "case-1", agent: "research-copilot", score: 0.94, winner: true, regression: false }],
+        },
+      ],
+      metrics: [
+        { scope: "research-copilot", model: "fast", tool: "documents_search", user: "u-admin", agent: "research-copilot", workflow: "wf-triage", tokens: 42100, cost: 0.84, latency_ms: 1180, tool_calls: 36 },
+      ],
+      knowledge: [],
+      knowledge_runs: [],
+      knowledge_scheduler_runs: [],
+      knowledge_searches: [],
+      extraction: {
+        engines: ["Docling", "Tika", "OCR"],
+        engine_config: { Docling: { tables: true, layout: true, ocr: true, batch_size: 50 } },
+        batch_queue: [{ id: "queue-demo", name: "contract.pdf", engine: "Docling", status: "completed", queued_at: new Date().toISOString() }],
+        runs: [
+          {
+            id: "ingest-demo",
+            engine: "Docling",
+            status: "completed",
+            started_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            artifact_dir: "data/ingestion/ingest-demo",
+            artifact_id: "artifact-extraction-report",
+            batch_size: 1,
+            documents: [
+              {
+                id: "doc-1",
+                name: "contract.pdf",
+                status: "extracted",
+                pages: 3,
+                tables: 2,
+                ocr: true,
+                ocr_confidence: 0.94,
+                layout_blocks: 8,
+                quality: "good",
+                text_path: "data/ingestion/ingest-demo/doc-1.txt",
+                tables_path: "data/ingestion/ingest-demo/doc-1-tables.json",
+                layout_path: "data/ingestion/ingest-demo/doc-1-layout.json",
+              },
+            ],
+          },
+        ],
+        tables: true,
+        layouts: true,
+        scans: true,
+        artifact_dir: "data/ingestion",
+      },
+      artifacts: [
+        {
+          id: "artifact-dashboard",
+          title: "Operations Snapshot",
+          kind: "dashboard",
+          content: "<section>Live metrics</section>",
+          version: 1,
+          versions: [{ version: 1, created_at: new Date().toISOString(), content: "<section>Live metrics</section>" }],
+          render_status: "ready",
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      sandbox: { enabled: true, languages: ["python"], runs: [] },
+      publishing: [
+        {
+          id: "pub-chat",
+          agent_id: "research-copilot",
+          kind: "embeddable-chat",
+          status: "draft",
+          url: "/embed/research-copilot",
+          policy: { auth: "workspace", cors: ["http://localhost:5173"], rate_limit_per_minute: 60, allowed_groups: ["core"], secret_refs: [] },
+        },
+      ],
+      deployment: {
+        docker_compose: "docker-compose.yml",
+        dockerfile: "Dockerfile",
+        kubernetes: "helm-ready",
+        helm_chart: "deploy/helm/jarvis",
+        postgres: "compose+helm-ready",
+        postgres_schema: "deploy/postgres/migrations/001_platform_hub.sql",
+        persistence: {
+          backend: "json",
+          status: "ready",
+          path: "data/platform_hub.json",
+        },
+        migrations: {
+          directory: "deploy/postgres/migrations",
+          status: "pending",
+          applied: [],
+          pending: ["001_platform_hub"],
+          catalog: [
+            {
+              id: "001_platform_hub",
+              file: "deploy/postgres/migrations/001_platform_hub.sql",
+              checksum: "mock",
+              size_bytes: 1,
+              tables: ["platform_agents", "platform_workflows", "platform_metric_events"],
+              indexes: ["idx_platform_metric_events"],
+              status: "pending",
+            },
+          ],
+          missing_files: [],
+          last_check: new Date().toISOString(),
+        },
+        redis: "compose+helm-ready",
+        storage: "persistent-volume+s3/minio-ready",
+        scaling: "horizontal-ready",
+        env_mapping: {
+          postgres: "JARVIS_POSTGRES_URL",
+          redis: "JARVIS_REDIS_URL",
+          s3_endpoint: "JARVIS_S3_ENDPOINT",
+        },
+        readiness: {
+          status: "ready",
+          checks: [
+            { name: "Dockerfile", status: "ready", detail: "Container image build file" },
+            { name: "docker-compose.yml", status: "ready", detail: "Compose stack for Postgres/Redis/MinIO" },
+          ],
+        },
+      },
+      sso: {
+        oidc: "configured",
+        ldap: "configurable",
+        scim: "enabled",
+        providers: ["local", "oidc"],
+        default_provider: "local",
+        provisioning: "scim-ready",
+        login_flows: [],
+        sessions: [],
+        events: [],
+      },
+      identity_providers: [
+        {
+          id: "oidc-main",
+          name: "Primary OIDC",
+          type: "oidc",
+          status: "configured",
+          issuer: "https://login.example.com",
+          client_id: "jarvis",
+          scim_enabled: true,
+          last_test: null,
+        },
+      ],
+      scim_events: [],
+      subagents: [],
+      agent_chain_runs: [],
+      solo_quickstarts: [
+        {
+          id: "solo-quickstart-demo",
+          status: "ready",
+          agent_id: "research-copilot",
+          artifact_id: "artifact-solo-quickstart",
+          created_at: new Date().toISOString(),
+          links: {
+            agent_app: "/apps/research-copilot",
+            embed: "/embed/research-copilot",
+            rest: "/api/agents/research-copilot/invoke",
+            mcp: "/mcp/research-copilot",
+          },
+          summary: {
+            title: "Personal Jarvis ist lokal bereit",
+            agent_output: "Research Copilot is ready with local tools, knowledge, sandbox, and publishing.",
+            knowledge_results: 2,
+            ingested_documents: 2,
+            sandbox_stdout: "Solo Jarvis quickstart ready",
+            workflow_status: "waiting_for_human",
+            artifact_id: "artifact-solo-quickstart",
+          },
+          next_actions: [
+            { label: "Agent im lokalen Web-App-Fenster oeffnen", href: "/apps/research-copilot", kind: "link" },
+            { label: "Knowledge-Treffer pruefen", target: "knowledge", kind: "tab" },
+          ],
+        },
+      ],
+      solo_audits: [
+        {
+          id: "solo-audit-demo",
+          status: "ready",
+          workspace_name: "Personal Jarvis",
+          ready_count: 19,
+          optional_count: 1,
+          blocking_count: 0,
+          total_count: 20,
+          created_at: new Date().toISOString(),
+          items: [
+            { id: "agent_builder", label: "Agent/Persona Builder", status: "ready", evidence: ["research-copilot:private"], recommendation: "Bereit fuer lokale Nutzung.", verified: true },
+            { id: "knowledge_sync", label: "Knowledge Sync", status: "ready", evidence: ["local-documents:watching"], recommendation: "Bereit fuer lokale Nutzung.", verified: true },
+            { id: "identity", label: "SSO/OIDC/LDAP/SCIM optional", status: "optional", evidence: ["solo_mode=true"], recommendation: "Optional fuer deinen Einzelplatzbetrieb.", verified: true },
+          ],
+        },
+      ],
+      companion: {
+        browser_extension: "manifest-ready",
+        mobile_ui: "responsive",
+        remote_access: "guarded",
+        workspace_endpoint: "/api/companion/workspace",
+        file_endpoint: "/api/companion/file",
+        terminal_endpoint: "/api/companion/terminal",
+        pairing_endpoint: "/api/companion/pair",
+        session_endpoint: "/api/companion/session",
+        workspace_snapshot_endpoint: "/api/companion/mobile-workspace",
+        allowed_terminal_commands: ["git status", "python version", "list files"],
+        pairing_required: true,
+        pairing_codes: [{ id: "pair-demo", device_name: "Mobile Companion", code: "***42", status: "pending", expires_at: new Date().toISOString() }],
+        sessions: [{ id: "companion-demo", device_name: "Mobile Companion", status: "active", scopes: ["workspace:read", "terminal:limited"], last_seen: new Date().toISOString() }],
+      },
+      counts: {},
+      updated_at: new Date().toISOString(),
+    } as T;
+  }
 
   return {} as T;
 }
@@ -287,6 +703,7 @@ export const jarvisApi = {
   getPermissions: () => requestJson<PermissionsPayload>("/api/permissions"),
   getReliability: () => requestJson<ReliabilityPayload>("/api/reliability"),
   getDevices: () => requestJson<DevicesPayload>("/api/devices"),
+  getPlatform: () => requestJson<PlatformPayload>("/api/platform"),
   getSettings: () => requestJson("/api/settings"),
   getCalendarStatus: () => requestJson("/api/calendar/status"),
   getChatSession: (sessionId: string) =>
@@ -340,6 +757,11 @@ export const jarvisApi = {
     requestJson("/api/calendar/connect", {
       method: "POST",
       body: JSON.stringify(settings),
+    }),
+  platformAction: (action: string, payload: Record<string, unknown>) =>
+    strictRequestJson<{ status?: string; error?: string; result: unknown; platform: PlatformPayload }>("/api/platform/action", {
+      method: "POST",
+      body: JSON.stringify({ action, payload }),
     }),
   startNewSession: () =>
     requestJson("/api/session/new", {

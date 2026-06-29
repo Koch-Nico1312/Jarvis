@@ -18,13 +18,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 from uuid import uuid4
 
 from config.config_loader import get_config
 from core.logger import get_logger
 from core.metrics_collector import get_metrics_collector
 from core.paths import project_path, resolve_project_root
+from core.platform_hub import get_platform_hub
 from core.performance_flags import get_performance_flags
 from core.performance_monitor import get_performance_monitor
 from core.performance_tracker import get_performance_tracker
@@ -1154,7 +1155,9 @@ class JarvisUI:
         logger.info("UI server listening on %s", self._server_url)
 
     def _handle_get(self, request: BaseHTTPRequestHandler) -> None:
-        path = urlparse(request.path).path
+        parsed_url = urlparse(request.path)
+        path = parsed_url.path
+        query = parse_qs(parsed_url.query)
 
         if path == "/api/dashboard":
             return request._send_json(200, self._dashboard_payload())  # type: ignore[attr-defined]
@@ -1182,6 +1185,37 @@ class JarvisUI:
             return request._send_json(200, self._reliability_payload())  # type: ignore[attr-defined]
         if path == "/api/devices":
             return request._send_json(200, self._devices_payload())  # type: ignore[attr-defined]
+        if path == "/api/platform":
+            return request._send_json(200, get_platform_hub().snapshot())  # type: ignore[attr-defined]
+        if path == "/api/companion/workspace":
+            result = get_platform_hub().action(
+                "list_workspace_files",
+                {"path": (query.get("path") or ["."])[0], "user": (query.get("user") or ["u-admin"])[0]},
+            )
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+        if path == "/api/companion/mobile-workspace":
+            result = get_platform_hub().action(
+                "get_companion_workspace",
+                {"path": (query.get("path") or ["."])[0], "session_id": (query.get("session_id") or [""])[0], "user": (query.get("user") or ["u-admin"])[0]},
+            )
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+        if path == "/api/companion/file":
+            try:
+                max_bytes = int((query.get("max_bytes") or ["200000"])[0])
+            except ValueError:
+                max_bytes = 200_000
+            result = get_platform_hub().action(
+                "read_workspace_file",
+                {
+                    "path": (query.get("path") or [""])[0],
+                    "max_bytes": max_bytes,
+                    "user": (query.get("user") or ["u-admin"])[0],
+                },
+            )
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
         if path == "/api/state":
             return request._send_json(200, self._current_state())  # type: ignore[attr-defined]
         if path == "/api/resources":
@@ -1194,6 +1228,30 @@ class JarvisUI:
             if not session:
                 return request._send_json(404, {"error": "chat not found"})  # type: ignore[attr-defined]
             return request._send_json(200, {"session": session})  # type: ignore[attr-defined]
+        if path.startswith("/api/agents/") and path.endswith("/manifest"):
+            agent_id = path.split("/api/agents/", 1)[1].rsplit("/manifest", 1)[0].strip("/")
+            manifest = get_platform_hub().get_agent_manifest(agent_id)
+            if manifest is None:
+                return request._send_json(404, {"error": "agent not found"})  # type: ignore[attr-defined]
+            return request._send_json(200, manifest)  # type: ignore[attr-defined]
+        if path.startswith("/apps/"):
+            agent_id = path.split("/apps/", 1)[1].strip("/")
+            html = get_platform_hub().get_agent_web_app(agent_id, embedded=False)
+            if html is None:
+                return request._send_json(404, {"error": "agent not found"})  # type: ignore[attr-defined]
+            return request._send_bytes(200, html.encode("utf-8"), "text/html; charset=utf-8")  # type: ignore[attr-defined]
+        if path.startswith("/embed/"):
+            agent_id = path.split("/embed/", 1)[1].strip("/")
+            html = get_platform_hub().get_agent_web_app(agent_id, embedded=True)
+            if html is None:
+                return request._send_json(404, {"error": "agent not found"})  # type: ignore[attr-defined]
+            return request._send_bytes(200, html.encode("utf-8"), "text/html; charset=utf-8")  # type: ignore[attr-defined]
+        if path.startswith("/mcp/"):
+            agent_id = path.split("/mcp/", 1)[1].strip("/")
+            descriptor = get_platform_hub().get_agent_mcp_descriptor(agent_id)
+            if descriptor is None:
+                return request._send_json(404, {"error": "agent not found"})  # type: ignore[attr-defined]
+            return request._send_json(200, descriptor)  # type: ignore[attr-defined]
         if path == "/api/settings":
             return request._send_json(200, self._settings_payload())  # type: ignore[attr-defined]
         if path == "/api/calendar/status":
@@ -1334,6 +1392,42 @@ class JarvisUI:
                 return request._send_json(400, {"error": "invalid permission level"})  # type: ignore[attr-defined]
             get_approval_flow().set_permission_level(level)
             return request._send_json(200, self._approvals_payload())  # type: ignore[attr-defined]
+
+        if path == "/api/platform/action":
+            action = str(payload.get("action", "")).strip()
+            action_payload = payload.get("payload", {})
+            if not isinstance(action_payload, dict):
+                return request._send_json(400, {"error": "platform payload must be an object"})  # type: ignore[attr-defined]
+            result = get_platform_hub().action(action, action_payload)
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+
+        if path == "/api/companion/terminal":
+            result = get_platform_hub().action("run_companion_terminal", payload if isinstance(payload, dict) else {})
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+
+        if path == "/api/companion/pair":
+            result = get_platform_hub().action("create_companion_pairing", payload if isinstance(payload, dict) else {})
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+
+        if path == "/api/companion/session":
+            action = str(payload.get("action") or "activate")
+            action_name = {
+                "activate": "activate_companion_session",
+                "heartbeat": "heartbeat_companion_session",
+                "revoke": "revoke_companion_session",
+            }.get(action, "activate_companion_session")
+            result = get_platform_hub().action(action_name, payload if isinstance(payload, dict) else {})
+            status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+
+        if path.startswith("/api/agents/") and path.endswith("/invoke"):
+            agent_id = path.split("/api/agents/", 1)[1].rsplit("/invoke", 1)[0].strip("/")
+            result = get_platform_hub().invoke_agent(agent_id, payload if isinstance(payload, dict) else {})
+            status = 404 if "error" in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
 
         if path == "/api/calendar/connect":
             updates = payload if isinstance(payload, dict) else {}

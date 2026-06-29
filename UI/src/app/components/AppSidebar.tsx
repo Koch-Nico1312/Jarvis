@@ -12,6 +12,7 @@ import {
   Waves,
   PanelLeftClose,
   PanelLeftOpen,
+  Boxes,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const menuItems = [
   { title: "Memory", icon: Brain, id: "memory" },
   { title: "Dokumente", icon: FileText, id: "documents" },
   { title: "Ressourcen", icon: Waves, id: "resources" },
+  { title: "Studio", icon: Boxes, id: "studio" },
 ];
 
 export function AppSidebar({

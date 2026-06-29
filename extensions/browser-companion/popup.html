@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jarvis Companion</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <strong>Jarvis</strong>
+        <span id="status">Checking</span>
+      </header>
+      <section class="panel">
+        <div class="row">
+          <input id="pairing-code" inputmode="numeric" placeholder="Pairing code">
+          <button id="pair">Pair</button>
+        </div>
+        <div id="session">No session</div>
+      </section>
+      <section class="panel">
+        <div class="row">
+          <button id="refresh">Workspace</button>
+          <button id="terminal">Git status</button>
+        </div>
+        <pre id="workspace"></pre>
+      </section>
+      <textarea id="message" rows="5" placeholder="Ask the active Jarvis agent"></textarea>
+      <button id="send">Send to Agent</button>
+      <pre id="output"></pre>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

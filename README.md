@@ -15,6 +15,7 @@ The project is designed as a modular assistant runtime: `main.py` starts the app
 - Optional local LLM fallback through Ollama.
 - Performance monitoring, health checks, cache support, and feature flags.
 - React/Vite UI workspace in `UI/` plus PyQt/PyQt WebEngine runtime dependencies.
+- Jarvis Studio Solo Workspace for single-user agents, tools, knowledge, workflows, artifacts, sandbox, publishing, companion access, quickstart, and audit.
 
 ## Repository Layout
 
@@ -172,6 +173,7 @@ The project includes configuration for pytest, Black, isort, mypy, Bandit, and p
 
 - `docs/Architecture.md` - architecture and component overview
 - `docs/API.md` - API and integration surfaces
+- `docs/SOLO_WORKSPACE.md` - single-user Studio workspace, quickstart, and 20-point audit
 - `docs/Troubleshooting.md` - common runtime issues
 - `docs/GMAIL_SETUP.md` - Gmail setup
 - `docs/OBSIDIAN_SETUP.md` - Obsidian setup

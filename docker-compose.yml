@@ -19,6 +19,12 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONUTF8=1
+      - JARVIS_PLATFORM_STORE=${JARVIS_PLATFORM_STORE:-auto}
+      - JARVIS_POSTGRES_URL=${JARVIS_POSTGRES_URL:-postgresql://jarvis:jarvis@postgres:5432/jarvis}
+      - JARVIS_REDIS_URL=${JARVIS_REDIS_URL:-redis://redis:6379/0}
+      - JARVIS_S3_ENDPOINT=${JARVIS_S3_ENDPOINT:-http://minio:9000}
+      - JARVIS_S3_BUCKET=${JARVIS_S3_BUCKET:-jarvis-artifacts}
+      - JARVIS_STORAGE_BACKEND=${JARVIS_STORAGE_BACKEND:-local+s3}
       # Add your API keys here or use .env file
       # - GEMINI_API_KEY=your_api_key_here
     devices:
@@ -28,12 +34,28 @@ services:
       - "8080:8080"
     networks:
       - jarvis-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; import os; sys.exit(0 if os.path.exists('main.py') else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      replicas: ${JARVIS_REPLICAS:-1}
+      resources:
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+        limits:
+          cpus: "2.0"
+          memory: 2G
 
   # Optional: Ollama for local LLM fallback
   ollama:
@@ -55,10 +77,75 @@ services:
     profiles:
       - with-ollama
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: jarvis-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-jarvis}
+      - POSTGRES_USER=${POSTGRES_USER:-jarvis}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-jarvis}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - jarvis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis -d jarvis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: jarvis-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - jarvis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: jarvis-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-jarvis}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-jarvis-local-dev}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - jarvis-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   jarvis-network:
     driver: bridge
 
 volumes:
   ollama_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
     driver: local

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "jarvis.fullname" . }}-config
+  labels:
+    {{- include "jarvis.labels" . | nindent 4 }}
+data:
+  JARVIS_PLATFORM_MODE: "server"
+  JARVIS_STORAGE_PATH: "/app/data"
+  JARVIS_PLATFORM_STORE: {{ .Values.env.JARVIS_PLATFORM_STORE | quote }}
+  JARVIS_STORAGE_BACKEND: {{ .Values.env.JARVIS_STORAGE_BACKEND | quote }}
+  JARVIS_S3_ENDPOINT: {{ .Values.s3.endpoint | quote }}
+  JARVIS_S3_BUCKET: {{ .Values.s3.bucket | quote }}
+  JARVIS_REDIS_URL: {{ .Values.redis.url | quote }}
+  JARVIS_POSTGRES_URL: {{ .Values.postgres.url | quote }}

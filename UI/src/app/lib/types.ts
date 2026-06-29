@@ -319,3 +319,580 @@ export interface ReliabilityPayload {
   recommendations: string[];
   error?: string;
 }
+
+export interface PlatformAgent {
+  id: string;
+  name: string;
+  model: string;
+  prompt: string;
+  tools: string[];
+  knowledge: string[];
+  parameters: Record<string, number | string | boolean>;
+  version?: string;
+  visibility: string;
+  owner: string;
+  updated_at?: string;
+}
+
+export interface PlatformAgentPackage {
+  id: string;
+  agent_id: string;
+  name: string;
+  format: string;
+  version: string;
+  artifact_path: string;
+  exported_at: string;
+  tool_count: number;
+  knowledge_count: number;
+}
+
+export interface PlatformUser {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  groups: string[];
+}
+
+export interface PlatformMarketplaceItem {
+  id: string;
+  name: string;
+  kind: string;
+  installed: boolean;
+  version: string;
+  latest_version?: string;
+  trust: string;
+  review_status?: string;
+  enabled?: boolean;
+  publisher?: string;
+  permissions?: string[];
+  risk?: { level: string; score: number; reasons?: string[]; permissions?: string[] };
+  checksum?: string;
+  signature?: string;
+  source_url?: string;
+  manifest?: Record<string, unknown>;
+  verification?: { status: string; checks?: Array<{ name: string; status: string; detail?: string }> };
+  description: string;
+  entrypoint?: string;
+  artifact_path?: string;
+  manifest_path?: string;
+  installed_at?: string;
+  updated_at?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+}
+
+export interface PlatformTool {
+  id: string;
+  name: string;
+  kind: string;
+  status: string;
+  description?: string;
+  code?: string;
+  method?: string;
+  path?: string;
+  schema?: Record<string, unknown>;
+  input_schema?: Record<string, unknown>;
+  output_schema?: Record<string, unknown>;
+  test_parameters?: Record<string, unknown>;
+  test_result?: string;
+  last_test?: Record<string, unknown>;
+  server_url?: string;
+  server_id?: string;
+  loaded?: boolean;
+  last_request_plan?: PlatformOpenApiRequestPlan;
+}
+
+export interface PlatformOpenApiRequestPlan {
+  method: string;
+  url: string;
+  path: string;
+  query: Record<string, unknown>;
+  headers: Record<string, unknown>;
+  body?: unknown;
+}
+
+export interface PlatformToolExecution {
+  id: string;
+  tool_id: string;
+  status: string;
+  request: PlatformOpenApiRequestPlan;
+  response_preview: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface PlatformWorkflowNode {
+  id: string;
+  type: string;
+  label: string;
+  x?: number;
+  y?: number;
+  config?: Record<string, unknown>;
+}
+
+export interface PlatformWorkflow {
+  id: string;
+  name: string;
+  nodes: PlatformWorkflowNode[];
+  edges: string[][];
+  canvas?: { zoom?: number; supports?: string[] };
+  version?: number;
+  versions?: Array<{ version: number; created_at: string; reason?: string; nodes: PlatformWorkflowNode[]; edges: string[][]; canvas?: Record<string, unknown> }>;
+  status: string;
+  updated_at?: string;
+}
+
+export interface PlatformRunStep {
+  node: string;
+  node_type?: string;
+  status: string;
+  input: string;
+  input_snapshot?: Record<string, unknown>;
+  output: string;
+  output_snapshot?: Record<string, unknown>;
+  latency_ms: number;
+  retries: number;
+  tool_calls?: Array<string | Record<string, unknown>>;
+  incoming?: string[];
+  outgoing?: string[];
+  route_labels?: string[];
+  branch_taken?: string | null;
+  selected_route?: string;
+  loop_iteration?: number;
+  human_required?: boolean;
+  retry_log?: string[];
+  error?: string | null;
+}
+
+export interface PlatformRunEvent {
+  id: string;
+  run_id?: string;
+  index: number;
+  step_index?: number;
+  type: string;
+  node?: string;
+  status: string;
+  message: string;
+  timestamp: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface PlatformRun {
+  id: string;
+  workflow_id: string;
+  status: string;
+  started_at: string;
+  completed_at?: string;
+  debug?: { edges?: string[][]; canvas?: Record<string, unknown>; supports?: string[]; timeline_events?: number; branch_attempts?: Record<string, number>; loop_counts?: Record<string, number>; human_decision?: string };
+  steps: PlatformRunStep[];
+  timeline?: PlatformRunEvent[];
+}
+
+export interface PlatformEvaluation {
+  id: string;
+  name: string;
+  agents: string[];
+  dataset: string;
+  status: string;
+  elo: Record<string, number>;
+  regressions: number;
+  last_score?: number;
+  last_run?: string;
+  baseline?: string;
+  challenger?: string;
+  regression_gate?: { min_score: number; max_regressions: number };
+}
+
+export interface PlatformEvaluationRun {
+  id: string;
+  evaluation_id: string;
+  dataset: string;
+  status: string;
+  score: number;
+  regressions: number;
+  winner?: string;
+  baseline?: string;
+  challenger?: string;
+  elo_delta?: Record<string, number>;
+  gate?: { status: string; min_score: number; max_regressions: number };
+  pairs?: Array<{ case_id: string; baseline: string; challenger: string; winner: string; loser?: string; margin: number }>;
+  created_at: string;
+  cases: Array<{ case_id: string; agent: string; score: number; winner: boolean; regression: boolean }>;
+}
+
+export interface PlatformEvaluationDataset {
+  id: string;
+  name: string;
+  cases: Array<{ id: string; input: string; expected: string; rubric?: string }>;
+}
+
+export interface PlatformMetric {
+  scope: string;
+  model: string;
+  tool?: string;
+  user: string;
+  agent?: string;
+  workflow: string;
+  tokens: number;
+  cost: number;
+  latency_ms: number;
+  tool_calls: number;
+}
+
+export interface PlatformMetricAggregate {
+  dimension: string;
+  key: string;
+  tokens: number;
+  cost: number;
+  latency_ms: number;
+  avg_latency_ms: number;
+  tool_calls: number;
+  count: number;
+}
+
+export interface PlatformKnowledgeSource {
+  id: string;
+  source: string;
+  target: string;
+  uri?: string;
+  status: string;
+  last_sync: string;
+  rag: string;
+  vector_db: string;
+  schedule?: string;
+  next_sync?: string;
+  watch_mode?: boolean;
+  connector_status?: string;
+  last_run_id?: string;
+}
+
+export interface PlatformKnowledgeRun {
+  id: string;
+  source_id: string;
+  source: string;
+  target: string;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  rag: string;
+  vector_db: string;
+  phases: Array<{ name: string; status: string; items: number; latency_ms: number }>;
+  documents?: number;
+  chunks?: number;
+  index?: { bm25_terms: number; vectors: number; reranker: string };
+}
+
+export interface PlatformKnowledgeSchedulerRun {
+  id: string;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  checked_sources: number;
+  synced_sources: number;
+  runs: string[];
+}
+
+export interface PlatformKnowledgeSearch {
+  id: string;
+  query: string;
+  source_ids: string[];
+  status: string;
+  retrieval: string;
+  created_at: string;
+  results: Array<{
+    source_id: string;
+    chunk_id: string;
+    document_id: string;
+    text: string;
+    bm25_score: number;
+    vector_score: number;
+    rerank_score: number;
+    metadata?: Record<string, unknown>;
+  }>;
+}
+
+export interface PlatformIdentityProvider {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  issuer?: string;
+  client_id?: string;
+  audience?: string;
+  jwks_uri?: string;
+  authorization_endpoint?: string;
+  token_endpoint?: string;
+  allowed_algs?: string[];
+  jwks?: { keys?: Array<Record<string, unknown>> };
+  ldap_url?: string;
+  scim_enabled: boolean;
+  last_test?: string | null;
+}
+
+export interface PlatformScimEvent {
+  id: string;
+  action: string;
+  user_id: string;
+  email: string;
+  status: string;
+  timestamp: string;
+}
+
+export interface PlatformSubagent {
+  id: string;
+  name: string;
+  parent: string;
+  role: string;
+  status: string;
+}
+
+export interface PlatformAgentChainRun {
+  id: string;
+  agent_id: string;
+  goal: string;
+  status: string;
+  compact_result: string;
+  created_at: string;
+  steps: Array<{
+    subagent_id: string;
+    name: string;
+    role: string;
+    status: string;
+    input: string;
+    output: string;
+    tokens_in: number;
+    tokens_out: number;
+  }>;
+}
+
+export interface PlatformSoloQuickstart {
+  id: string;
+  status: string;
+  agent_id: string;
+  artifact_id: string;
+  created_at: string;
+  links: Record<string, string>;
+  summary?: {
+    title?: string;
+    agent_output?: string;
+    knowledge_results?: number;
+    ingested_documents?: number;
+    sandbox_stdout?: string;
+    workflow_status?: string;
+    artifact_id?: string;
+  };
+  next_actions?: Array<{ label: string; href?: string; target?: string; kind: string }>;
+}
+
+export interface PlatformSoloAudit {
+  id: string;
+  status: string;
+  workspace_name: string;
+  ready_count: number;
+  optional_count: number;
+  blocking_count: number;
+  total_count: number;
+  created_at: string;
+  items: Array<{
+    id: string;
+    label: string;
+    status: string;
+    evidence: string[];
+    recommendation: string;
+    verified: boolean;
+  }>;
+}
+
+export interface PlatformArtifact {
+  id: string;
+  title: string;
+  kind: string;
+  content: string;
+  version?: number;
+  versions?: Array<{ version: number; created_at: string; content: string }>;
+  render_status?: string;
+  dependencies?: string[];
+  created_by?: string;
+  last_render?: { artifact_id: string; kind: string; version: number; status: string; mime: string; preview: string; updated_at: string };
+  updated_at: string;
+}
+
+export interface PlatformExtractionRun {
+  id: string;
+  engine: string;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  artifact_dir: string;
+  artifact_id?: string;
+  engine_config?: Record<string, unknown>;
+  batch_size: number;
+  diagnostics?: {
+    documents_total: number;
+    documents_review: number;
+    tables_total: number;
+    layout_blocks_total: number;
+    ocr_spans_total: number;
+    rag_ready: boolean;
+    warnings: string[];
+  };
+  documents: Array<{
+    id: string;
+    name: string;
+    status: string;
+    pages: number;
+    tables: number;
+    ocr: boolean;
+    ocr_confidence?: number;
+    ocr_spans?: number;
+    layout_blocks?: number;
+    quality?: string;
+    warnings?: string[];
+    quality_gates?: Array<{ name: string; status: string; value?: unknown; threshold?: number }>;
+    rag_ready?: boolean;
+    rerank_features?: Record<string, unknown>;
+    text_path: string;
+    tables_path: string;
+    layout_path: string;
+    searchable_path?: string;
+    report_path?: string;
+  }>;
+}
+
+export interface PlatformSandboxArtifact {
+  kind: string;
+  path: string;
+  title: string;
+}
+
+export interface PlatformSandboxRun {
+  id: string;
+  language: string;
+  code: string;
+  started_at: string;
+  completed_at?: string;
+  status: string;
+  stdout: string;
+  stderr: string;
+  uploaded_files?: Array<{ name: string; size?: number; original_size?: number; truncated?: boolean; rejected?: boolean }>;
+  policy?: Record<string, unknown>;
+  limits?: Record<string, unknown>;
+  artifacts: PlatformSandboxArtifact[];
+}
+
+export interface PlatformAuditEvent {
+  id: string;
+  action: string;
+  user: string;
+  permission: string;
+  resource: string;
+  status: string;
+  timestamp: string;
+  error?: string;
+}
+
+export interface PlatformPayload {
+  solo?: {
+    enabled: boolean;
+    owner_user: string;
+    workspace_name: string;
+    local_only: boolean;
+    status: string;
+    updated_at?: string;
+  };
+  solo_status?: {
+    enabled: boolean;
+    owner_user: string;
+    workspace_name: string;
+    local_only: boolean;
+    status: string;
+    ready_count: number;
+    total_count: number;
+    optional_count?: number;
+    blocking_count?: number;
+    updated_at?: string;
+    checklist: Array<{ id: string; label: string; status: string }>;
+  };
+  users: PlatformUser[];
+  groups: Array<{ id: string; name: string; members: string[] }>;
+  roles: Array<{ id: string; permissions: string[] }>;
+  acls: Array<Record<string, unknown>>;
+  audit_events?: PlatformAuditEvent[];
+  agents: PlatformAgent[];
+  agent_packages?: PlatformAgentPackage[];
+  marketplace: PlatformMarketplaceItem[];
+  marketplace_policy?: {
+    require_review?: boolean;
+    require_signature?: boolean;
+    allowed_trust?: string[];
+    max_risk?: string;
+    permission_denylist?: string[];
+    trusted_publishers?: string[];
+  };
+  marketplace_audit?: Array<{ id: string; action: string; item_id?: string; status: string; timestamp: string; details?: Record<string, unknown> }>;
+  tools: PlatformTool[];
+  mcp: { deferred: boolean; last_query: string; tools: PlatformTool[]; loaded_tools: PlatformTool[]; servers: Array<Record<string, unknown>> };
+  tool_executions?: PlatformToolExecution[];
+  workflows: PlatformWorkflow[];
+  runs: PlatformRun[];
+  evaluations: PlatformEvaluation[];
+  evaluation_datasets: PlatformEvaluationDataset[];
+  evaluation_runs: PlatformEvaluationRun[];
+  metrics: PlatformMetric[];
+  metric_events?: PlatformMetric[];
+  metrics_aggregate?: Record<string, PlatformMetricAggregate[]>;
+  knowledge: PlatformKnowledgeSource[];
+  knowledge_runs: PlatformKnowledgeRun[];
+  knowledge_scheduler_runs?: PlatformKnowledgeSchedulerRun[];
+  knowledge_searches?: PlatformKnowledgeSearch[];
+  extraction: {
+    engines?: string[];
+    engine_config?: Record<string, Record<string, unknown>>;
+    batch_queue?: Array<{ id: string; name: string; engine: string; status: string; queued_at: string; started_at?: string; completed_at?: string }>;
+    runs?: PlatformExtractionRun[];
+    tables?: boolean;
+    layouts?: boolean;
+    scans?: boolean;
+    artifact_dir?: string;
+    last_run_id?: string;
+  };
+  artifacts: PlatformArtifact[];
+  sandbox: {
+    enabled: boolean;
+    languages: string[];
+    runs: PlatformSandboxRun[];
+    artifact_dir?: string;
+    policy?: Record<string, unknown>;
+    audit?: Array<{ id: string; run_id?: string; language: string; status: string; blocked: boolean; uploaded_files: number; artifact_count: number; timestamp: string }>;
+  };
+  publishing: Array<{
+    id: string;
+    agent_id: string;
+    kind: string;
+    status: string;
+    url: string;
+    policy?: {
+      auth?: string;
+      cors?: string[];
+      rate_limit_per_minute?: number;
+      allowed_groups?: string[];
+      secret_refs?: string[];
+      api_key_count?: number;
+      api_keys?: Array<{ id: string; name?: string; status: string; created_at?: string; last_used_at?: string }>;
+      audit_invocations?: boolean;
+    };
+    artifact_path?: string;
+    updated_at?: string;
+  }>;
+  deployment: Record<string, unknown>;
+  sso: Record<string, unknown>;
+  identity_providers: PlatformIdentityProvider[];
+  scim_events: PlatformScimEvent[];
+  subagents: PlatformSubagent[];
+  agent_chain_runs: PlatformAgentChainRun[];
+  solo_quickstarts?: PlatformSoloQuickstart[];
+  solo_audits?: PlatformSoloAudit[];
+  companion: Record<string, unknown>;
+  counts: Record<string, number>;
+  updated_at: string;
+}

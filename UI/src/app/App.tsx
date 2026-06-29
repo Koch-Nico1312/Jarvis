@@ -8,6 +8,7 @@ import { MemoryView } from "./components/MemoryView";
 import { VoiceChatView } from "./components/VoiceChatView";
 import { ChatsView } from "./components/ChatsView";
 import { ResourcesView } from "./components/ResourcesView";
+import { StudioView } from "./components/StudioView";
 import { jarvisApi } from "./lib/api";
 import type { ChatSession, DashboardResponse } from "./lib/types";
 
@@ -18,6 +19,7 @@ const viewTitles: Record<string, string> = {
   memory: "Memory",
   documents: "Dokumente",
   resources: "Ressourcen",
+  studio: "Studio",
 };
 
 const DASHBOARD_REFRESH_MS = 2000;
@@ -303,6 +305,7 @@ export default function App() {
                     )}
                     {activeView === "memory" && <MemoryView />}
                     {activeView === "resources" && <ResourcesView dashboard={dashboard} />}
+                    {activeView === "studio" && <StudioView />}
                   </>
                 )}
               </div>
