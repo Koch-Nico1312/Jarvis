@@ -142,6 +142,7 @@ def register_core_services() -> None:
     from core.approval_flow import get_approval_flow
     from core.background_task_manager import get_background_task_manager
     from core.logger import get_logger
+    from core.knowledge_manager import get_knowledge_manager
     from core.memory_manager import get_memory_manager
     from core.metrics_collector import get_metrics_collector
     from core.performance_monitor import get_performance_monitor
@@ -155,6 +156,7 @@ def register_core_services() -> None:
     container.register_singleton("approval_flow", get_approval_flow)
     container.register_singleton("background_task_manager", get_background_task_manager)
     container.register_singleton("logger", lambda: get_logger(__name__))
+    container.register_singleton("knowledge_manager", get_knowledge_manager)
     container.register_singleton("memory_manager", get_memory_manager)
     container.register_singleton("metrics_collector", get_metrics_collector)
     container.register_singleton("performance_monitor", get_performance_monitor)

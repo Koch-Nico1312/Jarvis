@@ -1038,6 +1038,129 @@ class JarvisUI:
             "next_best_step": next_best_step,
         }
 
+    def _command_center_payload(self) -> Dict[str, Any]:
+        state = self._current_state()
+        resources = self._resource_snapshot()
+        setup = self._setup_payload()
+        cockpit = self._cockpit_payload()
+        resume = self._resume_payload()
+        documents = self._documents_payload()
+        action_history = self._action_history_payload()
+        approvals = self._approvals_payload()
+        permissions = self._permissions_payload()
+        reliability = self._reliability_payload()
+        quick_actions = self._quick_actions_payload()
+
+        files = documents.get("files", []) if isinstance(documents.get("files"), list) else []
+        indexed_files = [item for item in files if item.get("indexed")]
+        tools = permissions.get("tools", []) if isinstance(permissions.get("tools"), list) else []
+        enabled_tools = [item for item in tools if item.get("enabled")]
+        pending_approvals = approvals.get("pending", []) if isinstance(approvals.get("pending"), list) else []
+        performance = resources.get("performance", {}) if isinstance(resources.get("performance"), dict) else {}
+
+        warnings: list[Dict[str, Any]] = []
+        if not setup.get("configured"):
+            warnings.append(
+                {
+                    "id": "setup",
+                    "title": "Setup unvollstaendig",
+                    "subtitle": "API Keys oder lokale Modellkonfiguration pruefen",
+                    "status": "blocked",
+                    "source": "setup",
+                }
+            )
+        if reliability.get("status") in {"degraded", "blocked"}:
+            for idx, recommendation in enumerate(reliability.get("recommendations", [])[:4]):
+                warnings.append(
+                    {
+                        "id": f"reliability-{idx}",
+                        "title": str(recommendation)[:90],
+                        "status": str(reliability.get("status")),
+                        "source": "reliability",
+                    }
+                )
+        calendar_status = cockpit.get("calendar", {}).get("status", {})
+        if calendar_status and not calendar_status.get("authenticated"):
+            warnings.append(
+                {
+                    "id": "calendar",
+                    "title": "Kalender nicht verbunden",
+                    "subtitle": "Tagesuebersicht bleibt ohne Termine",
+                    "status": "degraded",
+                    "source": "calendar",
+                }
+            )
+        if pending_approvals:
+            warnings.append(
+                {
+                    "id": "approvals",
+                    "title": f"{len(pending_approvals)} offene Tool-Freigabe(n)",
+                    "subtitle": "Jarvis wartet auf Entscheidung",
+                    "status": "blocked",
+                    "source": "approvals",
+                }
+            )
+
+        open_questions = list(resume.get("open_ends", [])[:4])
+        for idx, approval in enumerate(pending_approvals[:4]):
+            open_questions.append(
+                {
+                    "id": f"approval-{idx}",
+                    "title": str(approval.get("summary") or approval.get("action") or "Tool-Freigabe"),
+                    "subtitle": str(approval.get("reason") or approval.get("tool_name") or ""),
+                    "status": str(approval.get("risk_level") or "pending"),
+                    "source": "approvals",
+                }
+            )
+
+        status_cards = [
+            {
+                "id": "backend",
+                "label": "Backend",
+                "value": str(state.get("state") or "online"),
+                "status": "ok" if reliability.get("status") == "ok" else str(reliability.get("status") or "degraded"),
+                "detail": f"{resources.get('threads', 0)} Threads, {performance.get('current_activity') or 'idle'}",
+            },
+            {
+                "id": "ui",
+                "label": "UI",
+                "value": "Live",
+                "status": "ok",
+                "detail": str(state.get("default_view") or "command-center"),
+            },
+            {
+                "id": "knowledge",
+                "label": "Knowledge",
+                "value": f"{len(indexed_files)}/{len(files)} Dateien",
+                "status": "ok" if indexed_files else "degraded",
+                "detail": "Indexierte Dokumente fuer lokale Suche",
+            },
+            {
+                "id": "tools",
+                "label": "Tools",
+                "value": f"{len(enabled_tools)}/{len(tools)} aktiv",
+                "status": "ok" if enabled_tools else "degraded",
+                "detail": f"{len(pending_approvals)} Freigaben offen",
+            },
+        ]
+
+        return {
+            "generated_at": datetime.now().isoformat(),
+            "status_cards": status_cards,
+            "active_tasks": cockpit.get("tasks", []),
+            "open_questions": open_questions,
+            "recent_actions": action_history.get("records", [])[:8],
+            "recent_files": resume.get("recent_files", []),
+            "warnings": warnings[:8],
+            "day_overview": {
+                "calendar": cockpit.get("calendar", {}).get("items", []),
+                "reminders": cockpit.get("reminders", []),
+                "tasks": cockpit.get("tasks", []),
+                "next_best_step": cockpit.get("next_best_step"),
+            },
+            "quick_actions": quick_actions.get("items", []),
+        }
+
     def _dashboard_payload(self) -> Dict[str, Any]:
         return {
             "state": self._current_state(),
@@ -1058,7 +1181,73 @@ class JarvisUI:
             "permissions": self._permissions_payload(),
             "reliability": self._reliability_payload(),
             "quick_actions": self._quick_actions_payload(),
+            "command_center": self._command_center_payload(),
         }
+
+    def _knowledge_action(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        from dataclasses import asdict, is_dataclass
+
+        from core.knowledge_manager import get_knowledge_manager
+
+        def encode(value: Any) -> Any:
+            if is_dataclass(value):
+                return encode(asdict(value))
+            if isinstance(value, list):
+                return [encode(item) for item in value]
+            if isinstance(value, dict):
+                return {str(key): encode(item) for key, item in value.items()}
+            return value
+
+        manager = get_knowledge_manager()
+        action = str(payload.get("action") or "search")
+        query = str(payload.get("query") or "")
+        limit = int(payload.get("max_results") or payload.get("limit") or 5)
+        sources = payload.get("sources")
+        if not isinstance(sources, list):
+            sources = None
+
+        if action == "search":
+            return {
+                "action": action,
+                "query": query,
+                "results": encode(manager.search(query, limit=limit, sources=sources)),
+            }
+        if action == "context":
+            return encode(manager.get_context(
+                query,
+                limit=limit,
+                sources=sources,
+                max_chars=int(payload.get("max_chars") or 4000),
+            ))
+        if action == "index":
+            source = {
+                "kind": payload.get("kind") or "directory",
+                "uri": payload.get("path") or payload.get("uri") or ".",
+                "metadata": payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
+            }
+            return encode(manager.index(source))
+        if action == "suggest_notes":
+            return encode(manager.suggest_notes(query, limit=limit, sources=sources))
+        if action == "write_notes":
+            return encode(manager.write_suggested_notes(query, limit=limit, sources=sources))
+        if action == "graph":
+            plan = manager.suggest_notes(query, limit=limit, sources=sources)
+            return {"query": query, "graph_edges": encode(plan.graph_edges)}
+        if action == "stats":
+            return {
+                "sources": [getattr(adapter, "name", "unknown") for adapter in manager.adapters],
+                "default_search_sources": ["obsidian", "documents"],
+                "actions": [
+                    "search",
+                    "context",
+                    "index",
+                    "suggest_notes",
+                    "write_notes",
+                    "graph",
+                    "stats",
+                ],
+            }
+        return {"error": f"unknown knowledge action: {action}"}
 
     def _recent_chats_payload(self) -> Dict[str, Any]:
         return {
@@ -1228,6 +1417,8 @@ class JarvisUI:
             return request._send_json(200, self._dashboard_payload())  # type: ignore[attr-defined]
         if path == "/api/cockpit":
             return request._send_json(200, self._cockpit_payload())  # type: ignore[attr-defined]
+        if path == "/api/command-center":
+            return request._send_json(200, self._command_center_payload())  # type: ignore[attr-defined]
         if path == "/api/session/resume":
             return request._send_json(200, self._resume_payload())  # type: ignore[attr-defined]
         if path == "/api/documents":
@@ -1465,6 +1656,11 @@ class JarvisUI:
                 return request._send_json(400, {"error": "platform payload must be an object"})  # type: ignore[attr-defined]
             result = get_platform_hub().action(action, action_payload)
             status = 400 if "error" in result and "platform" not in result else 200
+            return request._send_json(status, result)  # type: ignore[attr-defined]
+
+        if path == "/api/knowledge":
+            result = self._knowledge_action(payload if isinstance(payload, dict) else {})
+            status = 400 if "error" in result else 200
             return request._send_json(status, result)  # type: ignore[attr-defined]
 
         if path == "/api/companion/terminal":

@@ -33,6 +33,7 @@ from core.approval_flow import get_approval_flow
 from core.cross_device import get_cross_device
 from core.healthcheck import build_runtime_report, format_runtime_report
 from core.hud_overlay import get_hud_manager
+from core.knowledge_manager import get_knowledge_manager
 from core.llm_fallback import get_hybrid_llm
 from core.logger import get_logger
 from core.metrics_collector import get_metrics_collector
@@ -251,6 +252,7 @@ class JarvisLive:
         self.hybrid_llm = get_hybrid_llm()
         self.passive_vision = get_passive_vision()
         self.semantic_search = get_semantic_search()
+        self.knowledge_manager = get_knowledge_manager()
         self.hud = get_hud_manager()
         self.proactive = get_proactive_suggestions()
         self.emotion = get_emotion_analyzer()
@@ -578,6 +580,101 @@ class JarvisLive:
             self.semantic_search.clear_index()
             return "Semantic search index cleared."
         return json.dumps(self.semantic_search.get_stats(), indent=2)
+
+    def _handle_knowledge_search(self, args: dict[str, Any]) -> str:
+        """Handle unified knowledge search across Obsidian notes and indexed documents."""
+        action = args.get("action", "search")
+        max_results = int(args.get("max_results", 5) or 5)
+        sources = args.get("sources")
+        if not isinstance(sources, list) or not sources:
+            sources = ["obsidian", "documents"]
+
+        if action == "index":
+            source = {
+                "kind": args.get("kind") or "directory",
+                "uri": args.get("path") or args.get("uri") or ".",
+                "metadata": args.get("metadata") or {},
+            }
+            return json.dumps(self.knowledge_manager.index(source), indent=2)
+
+        if action == "context":
+            query = args.get("query", "")
+            context = self.knowledge_manager.get_context(
+                query,
+                limit=max_results,
+                sources=sources,
+                max_chars=int(args.get("max_chars", 4000) or 4000),
+            )
+            if not context.text:
+                return "No unified knowledge context found."
+            return context.text
+
+        if action == "suggest_notes":
+            query = args.get("query", "")
+            plan = self.knowledge_manager.suggest_notes(
+                query,
+                limit=max_results,
+                sources=sources,
+            )
+            if not plan.suggestions:
+                return "No automatic note suggestions found."
+            return json.dumps(
+                {
+                    "query": plan.query,
+                    "suggestions": [suggestion.__dict__ for suggestion in plan.suggestions],
+                    "graph_edges": [edge.__dict__ for edge in plan.graph_edges],
+                },
+                indent=2,
+            )
+
+        if action == "write_notes":
+            query = args.get("query", "")
+            return json.dumps(
+                self.knowledge_manager.write_suggested_notes(
+                    query,
+                    limit=max_results,
+                    sources=sources,
+                ),
+                indent=2,
+            )
+
+        if action == "graph":
+            query = args.get("query", "")
+            plan = self.knowledge_manager.suggest_notes(
+                query,
+                limit=max_results,
+                sources=sources,
+            )
+            if not plan.graph_edges:
+                return "No knowledge graph edges found."
+            lines = [f"Knowledge graph edges for '{query}':"]
+            lines.extend(
+                f"- [[{edge.source}]] -> [[{edge.target}]] ({edge.relation})"
+                for edge in plan.graph_edges
+            )
+            return "\n".join(lines)
+
+        if action == "stats":
+            adapters = [getattr(adapter, "name", "unknown") for adapter in self.knowledge_manager.adapters]
+            return json.dumps(
+                {
+                    "sources": adapters,
+                    "default_search_sources": ["obsidian", "documents"],
+                },
+                indent=2,
+            )
+
+        query = args.get("query", "")
+        results = self.knowledge_manager.search(query, limit=max_results, sources=sources)
+        if not results:
+            return "No unified knowledge results found."
+
+        lines = [f"Found {len(results)} knowledge results:"]
+        for item in results:
+            location = f" ({item.uri})" if item.uri else ""
+            snippet = " ".join(item.content.split())[:220]
+            lines.append(f"- [{item.source}] {item.title}{location}: {snippet}")
+        return "\n".join(lines)
 
     def _handle_proactive_suggestions(self, args: dict[str, Any]) -> str:
         """Handle proactive suggestions tool calls."""
@@ -1176,6 +1273,9 @@ class JarvisLive:
 
             elif name == "semantic_search":
                 result = self._handle_semantic_search(args)
+
+            elif name == "knowledge_search":
+                result = self._handle_knowledge_search(args)
 
             elif name == "proactive_suggestions":
                 result = self._handle_proactive_suggestions(args)

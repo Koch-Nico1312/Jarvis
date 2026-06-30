@@ -1,5 +1,6 @@
 import type {
   CockpitPayload,
+  CommandCenterPayload,
   DashboardResponse,
   DocumentsPayload,
   MemoryPayload,
@@ -264,6 +265,27 @@ function getMockData<T>(path: string): T {
     quick_actions: {
       items: [],
     },
+    command_center: {
+      generated_at: new Date().toISOString(),
+      status_cards: [
+        { id: "backend", label: "Backend", value: "Mock", status: "degraded", detail: "Backend nicht erreichbar" },
+        { id: "ui", label: "UI", value: "Ready", status: "ok", detail: "Fallback-Daten aktiv" },
+        { id: "knowledge", label: "Knowledge", value: "0 Quellen", status: "degraded", detail: "Keine lokalen Treffer geladen" },
+        { id: "tools", label: "Tools", value: "4 aktiv", status: "ok", detail: "Mock-Tools verfuegbar" },
+      ],
+      active_tasks: [],
+      open_questions: [],
+      recent_actions: [],
+      recent_files: [],
+      warnings: [{ id: "backend", title: "Backend nicht erreichbar", source: "ui", status: "degraded" }],
+      day_overview: {
+        calendar: [],
+        reminders: [],
+        tasks: [],
+        next_best_step: null,
+      },
+      quick_actions: [],
+    },
   };
 
   if (path === "/api/dashboard") {
@@ -298,6 +320,9 @@ function getMockData<T>(path: string): T {
   }
   if (path === "/api/reliability") {
     return mockDashboard.reliability as T;
+  }
+  if (path === "/api/command-center") {
+    return mockDashboard.command_center as T;
   }
   if (path === "/api/devices") {
     return mockDashboard.devices as T;
@@ -772,6 +797,7 @@ function normalizePlatformPayload(payload: PlatformPayload): PlatformPayload {
 
 export const jarvisApi = {
   getDashboard: () => requestJson<DashboardResponse>("/api/dashboard"),
+  getCommandCenter: () => requestJson<CommandCenterPayload>("/api/command-center"),
   getCockpit: () => requestJson<CockpitPayload>("/api/cockpit"),
   getResume: () => requestJson<ResumePayload>("/api/session/resume"),
   getDocuments: () => requestJson<DocumentsPayload>("/api/documents"),
@@ -847,6 +873,11 @@ export const jarvisApi = {
       ...response,
       platform: normalizePlatformPayload(response.platform),
     })),
+  knowledgeAction: (payload: Record<string, unknown>) =>
+    strictRequestJson<Record<string, unknown>>("/api/knowledge", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   startNewSession: () =>
     requestJson("/api/session/new", {
       method: "POST",

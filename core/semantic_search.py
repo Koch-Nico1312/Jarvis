@@ -190,8 +190,14 @@ class SemanticSearch:
 
         return None
 
-    def index_file(self, file_path: Path, content: str, metadata: Dict[str, Any] = None):
-        """Index a file for semantic search"""
+    def index_text(
+        self,
+        document_id: str,
+        title: str,
+        content: str,
+        metadata: Dict[str, Any] = None,
+    ):
+        """Index arbitrary text for semantic search."""
         if not self.enabled or not self.embedder:
             return False
 
@@ -203,13 +209,12 @@ class SemanticSearch:
             embeddings = self.embedder.encode(chunks).tolist()
 
             # Create IDs
-            file_id = str(file_path)
-            ids = [f"{file_id}_{i}" for i in range(len(chunks))]
+            ids = [f"{document_id}_{i}" for i in range(len(chunks))]
 
             # Prepare metadata
             base_metadata = {
-                "file_path": str(file_path),
-                "file_name": file_path.name,
+                "file_path": document_id,
+                "file_name": title,
                 "indexed_at": datetime.now().isoformat(),
             }
             if metadata:
@@ -222,12 +227,16 @@ class SemanticSearch:
                 ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas
             )
 
-            print(f"[SemanticSearch] 📄 Indexed {file_path.name} ({len(chunks)} chunks)")
+            print(f"[SemanticSearch] 📄 Indexed {title} ({len(chunks)} chunks)")
             return True
 
         except Exception as e:
-            print(f"[SemanticSearch] ❌ Index error for {file_path.name}: {e}")
+            print(f"[SemanticSearch] ❌ Index error for {title}: {e}")
             return False
+
+    def index_file(self, file_path: Path, content: str, metadata: Dict[str, Any] = None):
+        """Index a file for semantic search"""
+        return self.index_text(str(file_path), file_path.name, content, metadata=metadata)
 
     def index_directory(self, directory: Path, extensions: List[str] = None):
         """Index all files in a directory"""

@@ -1,6 +1,7 @@
 import {
   Calendar,
   Cpu,
+  LayoutDashboard,
   HardDrive,
   Home,
   Brain,
@@ -13,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Boxes,
+  DatabaseZap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,10 +38,12 @@ import { SettingsModal } from "./SettingsModal";
 import type { DashboardResponse } from "../lib/types";
 
 const menuItems = [
+  { title: "Command Center", icon: LayoutDashboard, id: "command-center" },
   { title: "Startseite", icon: Home, id: "home" },
   { title: "Sprechen", icon: Mic, id: "voice-chat" },
   { title: "Chats", icon: MessageSquareText, id: "chats" },
   { title: "Memory", icon: Brain, id: "memory" },
+  { title: "Knowledge", icon: DatabaseZap, id: "knowledge" },
   { title: "Dokumente", icon: FileText, id: "documents" },
   { title: "Ressourcen", icon: Waves, id: "resources" },
   { title: "Studio", icon: Boxes, id: "studio" },

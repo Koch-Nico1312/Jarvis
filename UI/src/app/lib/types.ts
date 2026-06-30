@@ -98,6 +98,7 @@ export interface DashboardResponse {
   permissions?: PermissionsPayload;
   reliability?: ReliabilityPayload;
   quick_actions?: QuickActionsPayload;
+  command_center?: CommandCenterPayload;
 }
 
 export interface SessionPayload {
@@ -302,6 +303,31 @@ export interface QuickActionPayload {
 
 export interface QuickActionsPayload {
   items: QuickActionPayload[];
+}
+
+export interface CommandCenterStatusCard {
+  id: string;
+  label: string;
+  value: string;
+  status: "ok" | "degraded" | "blocked" | string;
+  detail?: string;
+}
+
+export interface CommandCenterPayload {
+  generated_at: string;
+  status_cards: CommandCenterStatusCard[];
+  active_tasks: CockpitItem[];
+  open_questions: CockpitItem[];
+  recent_actions: ActionRecordPayload[];
+  recent_files: CockpitItem[];
+  warnings: CockpitItem[];
+  day_overview: {
+    calendar: CockpitItem[];
+    reminders: CockpitItem[];
+    tasks: CockpitItem[];
+    next_best_step: CockpitPayload["next_best_step"];
+  };
+  quick_actions: QuickActionPayload[];
 }
 
 export interface ReliabilityCheckPayload {

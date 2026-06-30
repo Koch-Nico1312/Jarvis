@@ -875,6 +875,45 @@ FEATURE_TOOL_DECLARATIONS: List[Dict[str, Any]] = [
         },
     },
     {
+        "name": "knowledge_search",
+        "description": (
+            "Unified local knowledge search across Obsidian personal notes and indexed "
+            "documents. Use this when the user asks Jarvis to search what it knows, "
+            "find local knowledge, or gather context from notes and documents together."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "action": {
+                    "type": "STRING",
+                    "description": "search | context | index | stats | suggest_notes | write_notes | graph",
+                },
+                "query": {"type": "STRING", "description": "Search query or context question"},
+                "max_results": {"type": "INTEGER", "description": "Maximum number of results"},
+                "sources": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                    "description": "Optional source filter, e.g. obsidian, documents, wikipedia",
+                },
+                "path": {"type": "STRING", "description": "Directory or file path to index"},
+                "uri": {"type": "STRING", "description": "Source URI to index"},
+                "kind": {
+                    "type": "STRING",
+                    "description": "Source kind for indexing: directory | file | obsidian | zim | wikipedia",
+                },
+                "metadata": {
+                    "type": "OBJECT",
+                    "description": "Optional metadata to attach while indexing",
+                },
+                "max_chars": {
+                    "type": "INTEGER",
+                    "description": "Maximum characters for context output",
+                },
+            },
+            "required": ["action"],
+        },
+    },
+    {
         "name": "proactive_suggestions",
         "description": (
             "Shows or manages proactive suggestions gathered from recent user activity."

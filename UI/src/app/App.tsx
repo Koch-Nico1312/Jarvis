@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 import { Sparkles, Activity } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/AppSidebar";
+import { CommandCenterView } from "./components/CommandCenterView";
 import { DocumentsView } from "./components/DocumentsView";
 import { HomeView } from "./components/HomeView";
 import { MemoryView } from "./components/MemoryView";
+import { KnowledgeView } from "./components/KnowledgeView";
 import { VoiceChatView } from "./components/VoiceChatView";
 import { ChatsView } from "./components/ChatsView";
 import { ResourcesView } from "./components/ResourcesView";
@@ -14,10 +16,12 @@ import { jarvisApi } from "./lib/api";
 import type { ChatSession, DashboardResponse } from "./lib/types";
 
 const viewTitles: Record<string, string> = {
+  "command-center": "Command Center",
   home: "Dashboard",
   "voice-chat": "Sprechen",
   chats: "Chats",
   memory: "Memory",
+  knowledge: "Knowledge",
   documents: "Dokumente",
   resources: "Ressourcen",
   studio: "Studio",
@@ -118,11 +122,12 @@ function stableDashboardSignature(dashboard: DashboardResponse) {
     approvals: dashboard.approvals,
     permissions: dashboard.permissions,
     quick_actions: dashboard.quick_actions,
+    command_center: dashboard.command_center,
   });
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState("command-center");
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -180,12 +185,12 @@ export default function App() {
       return;
     }
 
-    const requested = dashboard.settings?.ui?.default_view ?? dashboard.state?.default_view ?? "voice-chat";
+    const requested = dashboard.settings?.ui?.default_view ?? dashboard.state?.default_view ?? "command-center";
     const normalized =
       requested === "voice" || requested === "speech" || requested === "listen"
-        ? "home"
+        ? "command-center"
         : requested === "voice-chat"
-          ? "home"
+          ? "command-center"
         : requested;
 
     if (typeof normalized === "string" && normalized) {
@@ -323,6 +328,14 @@ export default function App() {
                   </div>
                 ) : (
                   <ViewErrorBoundary viewKey={activeView}>
+                    {activeView === "command-center" && (
+                      <CommandCenterView
+                        dashboard={dashboard}
+                        onSendCommand={handleSendCommand}
+                        onStartNewChat={handleStartNewChat}
+                        onViewChange={setActiveView}
+                      />
+                    )}
                     {activeView === "home" && (
                       <HomeView dashboard={dashboard} onStartNewChat={handleStartNewChat} />
                     )}
@@ -347,6 +360,7 @@ export default function App() {
                       <DocumentsView currentFile={state?.current_file ?? null} />
                     )}
                     {activeView === "memory" && <MemoryView />}
+                    {activeView === "knowledge" && <KnowledgeView />}
                     {activeView === "resources" && <ResourcesView dashboard={dashboard} />}
                     {activeView === "studio" && <StudioView />}
                   </ViewErrorBoundary>
